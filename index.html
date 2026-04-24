@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>麦吉AI - 企业智能工作台</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="login-view" id="loginView">
+        <div class="login-panel">
+          <div class="brand-mark" aria-hidden="true">M</div>
+          <p class="eyebrow">麦吉AI</p>
+          <h1>企业智能工作台</h1>
+          <p class="login-copy">用统一入口管理 AI 对话、专家卡片和业务知识，让团队更快完成增长、投放与访谈分析。</p>
+          <div class="notice-box">
+            <strong>合规使用告知</strong>
+            <span>本原型默认保存对话记录用于内部审计与业务复盘，请勿输入个人隐私、客户敏感信息或未授权资料。</span>
+          </div>
+          <button class="ding-login" id="dingLogin" type="button">
+            <span class="ding-icon" aria-hidden="true">D</span>
+            钉钉登录
+          </button>
+        </div>
+      </section>
+
+      <section class="workspace is-hidden" id="workspace">
+        <aside class="sidebar" id="sidebar">
+          <div class="sidebar-top">
+            <button
+              class="icon-button"
+              id="sidebarMenuToggle"
+              type="button"
+              aria-label="展开菜单"
+              aria-expanded="false"
+              aria-controls="sidebar"
+            >
+              <span aria-hidden="true">☰</span>
+            </button>
+            <button class="icon-button search" type="button" aria-label="搜索">
+              <span aria-hidden="true">⌕</span>
+            </button>
+          </div>
+
+          <nav class="nav-list" aria-label="主导航">
+            <button class="nav-item active" id="newChatNav" type="button">
+              <span aria-hidden="true">✎</span>
+              发起新对话
+            </button>
+            <button class="nav-item" type="button">
+              <span aria-hidden="true">☆</span>
+              我的内容
+            </button>
+            <button class="nav-item" id="adminNav" type="button">
+              <span aria-hidden="true">⚙</span>
+              后台管理
+            </button>
+          </nav>
+
+          <div class="sidebar-section">
+            <div class="section-label">
+              <span>智能体</span>
+              <span aria-hidden="true">›</span>
+            </div>
+            <button class="muted-link" type="button">登录后显示常用智能体</button>
+          </div>
+
+          <div class="sidebar-section history-area">
+            <div class="section-label">
+              <span>对话</span>
+              <span aria-hidden="true">⋮</span>
+            </div>
+            <div class="history-list" id="historyList">
+              <button class="history-item" type="button">麦吉AI 产品原型讨论</button>
+              <button class="history-item" type="button">电商增长工具命名</button>
+              <button class="history-item" type="button">访谈大纲整理</button>
+            </div>
+          </div>
+
+          <div class="sidebar-footer">
+            <div class="quota-card">
+              <div>
+                <span class="quota-label">今日额度</span>
+                <strong id="quotaText">68%</strong>
+              </div>
+              <div class="quota-bar" aria-hidden="true">
+                <span style="width: 68%"></span>
+              </div>
+            </div>
+            <button class="user-chip" type="button">
+              <span class="avatar" aria-hidden="true">麦</span>
+              <span>麦吉体验用户</span>
+            </button>
+          </div>
+        </aside>
+
+        <div class="content" id="contentArea">
+          <header class="topbar">
+            <div class="product-name">
+              <span class="spark" aria-hidden="true">✦</span>
+              <span>麦吉AI 企业智能工作台</span>
+            </div>
+            <button class="account-button" type="button">体验账号</button>
+          </header>
+
+          <section class="chat-view is-hidden" id="chatView" aria-label="对话内容">
+            <div class="chat-header">
+              <div>
+                <p class="eyebrow">当前对话</p>
+                <h2 id="chatTitle">新的麦吉AI对话</h2>
+              </div>
+              <button class="secondary-button compact" id="clearChat" type="button">新对话</button>
+            </div>
+            <div class="message-list" id="messageList"></div>
+          </section>
+
+          <section class="hero-area" id="heroArea">
+            <div class="hero-head">
+              <div class="greeting">
+                <p>你好</p>
+                <h1>需要我为你做些什么？</h1>
+              </div>
+              <img class="ip-mascot" src="./assets/maiji-ip.png" alt="麦吉AI IP形象" />
+            </div>
+
+            <section class="composer" aria-label="AI 对话输入框">
+              <textarea id="promptInput" rows="2" placeholder="在这里输入任何问题..."></textarea>
+              <div class="composer-tools">
+                <div class="tool-left">
+                  <button class="small-icon" type="button" aria-label="添加附件">＋</button>
+                  <button class="tool-button" type="button">
+                    <span aria-hidden="true">⌘</span>
+                    工具
+                  </button>
+                </div>
+                <div class="tool-right">
+                  <div class="model-switcher" id="modelSwitcher">
+                    <button class="model-select" id="modelSelect" type="button" aria-haspopup="listbox" aria-expanded="false">
+                      <span id="modelLabel">GPT 快速</span>
+                      <span aria-hidden="true">⌄</span>
+                    </button>
+                    <div class="model-menu is-hidden" id="modelMenu" role="listbox" aria-label="选择模型模式">
+                      <button class="model-option selected" type="button" data-model="GPT 快速" data-desc="日常问答、轻量改写、快速生成">
+                        <strong>GPT 快速</strong>
+                        <span>响应更快，适合普通任务</span>
+                      </button>
+                      <button class="model-option" type="button" data-model="GPT 思考" data-desc="策略分析、复杂拆解、多步骤推理">
+                        <strong>GPT 思考</strong>
+                        <span>更擅长分析和规划</span>
+                      </button>
+                      <button class="model-option" type="button" data-model="GPT Pro" data-desc="高质量产出、重要方案、长文本任务">
+                        <strong>GPT Pro</strong>
+                        <span>质量优先，适合关键输出</span>
+                      </button>
+                    </div>
+                  </div>
+                  <button class="small-icon" type="button" aria-label="语音输入">♪</button>
+                  <button class="send-button" id="sendButton" type="button" aria-label="发送">▶</button>
+                </div>
+              </div>
+              <div class="expert-state is-hidden" id="expertState">
+                <span>专家模式已启用</span>
+                <strong id="activeExpertName"></strong>
+                <button id="exitExpert" type="button">退出</button>
+              </div>
+            </section>
+          </section>
+
+          <section class="creator-view is-hidden" id="creatorView" aria-label="创建专家">
+            <div class="creator-header">
+              <div>
+                <p class="eyebrow">创建专家 / Create Expert</p>
+                <h1>把业务经验沉淀成可复用的 AI 专家</h1>
+              </div>
+              <button class="primary-button" id="saveExpert" type="button">保存专家 / Save</button>
+            </div>
+
+            <div class="creator-grid">
+              <form class="expert-form" id="expertForm">
+                <label class="form-field">
+                  <span>专家名称 / Name</span>
+                  <input id="expertNameInput" type="text" value="电商管理落地顾问" />
+                </label>
+
+                <label class="form-field">
+                  <span>一句话描述 / Description</span>
+                  <input id="expertDescInput" type="text" value="用组织、绩效、流程和运营动作提升电商利润率" />
+                </label>
+
+                <div class="form-row">
+                  <label class="form-field">
+                    <span>分类 / Category</span>
+                    <select id="expertCategoryInput">
+                      <option>管理工具</option>
+                      <option>电商工具</option>
+                      <option>设计工具</option>
+                    </select>
+                  </label>
+                  <label class="form-field">
+                    <span>绑定模型 / Bound Model</span>
+                    <select id="expertModelInput">
+                      <option>GPT 快速</option>
+                      <option>GPT 思考</option>
+                      <option selected>GPT Pro</option>
+                    </select>
+                  </label>
+                </div>
+
+                <section class="form-block">
+                  <h2>Profile / 专家画像</h2>
+                  <label class="form-field">
+                    <span>专业能力 / Expertise</span>
+                    <textarea id="expertiseInput" rows="3">精通蒋晖电商管理理论（组织、绩效、流程、运营），擅长从草根实战中提炼决策模型，拒绝纸上谈兵，专注于“人、货、场、钱”的颗粒度管理。</textarea>
+                  </label>
+                  <label class="form-field">
+                    <span>语气 / Tone</span>
+                    <textarea id="toneInput" rows="2">犀利、务实、直击痛点、不留情面、像合伙人一样替你省钱和操心。</textarea>
+                  </label>
+                  <label class="form-field">
+                    <span>语言风格 / Language</span>
+                    <textarea id="languageInput" rows="2">商业大白话，拒绝学术名词，只讲“能落地”的电商黑话。</textarea>
+                  </label>
+                </section>
+
+                <section class="form-block">
+                  <h2>Constraints / 约束禁令</h2>
+                  <textarea id="constraintsInput" rows="5">严禁输出空洞的“管理鸡汤”，必须给出具体的指标（ROI、转化率、人效等）作为支撑。
+严禁一次性抛出多个复杂问题，必须保持“单点突破”的节奏。
+所有建议必须基于蒋晖管理体系（如：责权利对等、数据驱动决策、流程标准化）。</textarea>
+                </section>
+
+                <section class="form-block">
+                  <h2>Goals / 目标</h2>
+                  <textarea id="goalsInput" rows="4">帮助用户通过“组织结构”和“流程优化”实现电商利润率的提升。
+通过灵魂拷问，识别并清除用户在经营管理中的“盲目乐观”和“执行漏洞”。</textarea>
+                </section>
+
+                <section class="form-block">
+                  <h2>Workflow / 工作流</h2>
+                  <textarea id="workflowInput" rows="5">诊断用户的商业模式（货架/直播/跨境/IP），识别当前的核心痛点（流量贵、转化低、人效差）。
+结合“五位大佬”思维模型进行追问，倒逼用户交出真实数据和底层逻辑。
+输出可落地的“管理动作清单”，并设定下一次复盘的时间节点。</textarea>
+                </section>
+
+                <section class="form-block">
+                  <h2>Knowledge / 知识库</h2>
+                  <button class="knowledge-upload" type="button">
+                    <span aria-hidden="true">＋</span>
+                    添加文件 / Add Files
+                  </button>
+                  <label class="checkbox-field">
+                    <input type="checkbox" />
+                    <span>停用知识引用 / Disable retrieval</span>
+                  </label>
+                </section>
+              </form>
+
+              <aside class="expert-preview">
+                <div class="preview-card">
+                  <div class="preview-card-head">
+                    <span class="card-icon advisor" aria-hidden="true">▦</span>
+                    <div>
+                      <h2 id="previewName">电商管理落地顾问</h2>
+                      <p id="previewDesc">用组织、绩效、流程和运营动作提升电商利润率</p>
+                    </div>
+                  </div>
+                  <div class="preview-badge-row">
+                    <span id="previewCategory">管理工具</span>
+                    <span id="previewModel">GPT Pro</span>
+                  </div>
+                </div>
+
+                <div class="preview-panel">
+                  <h3>Prompt Preview / 指令预览</h3>
+                  <pre id="promptPreview"></pre>
+                </div>
+
+                <div class="preview-chat">
+                  <p>Preview Chat / 对话预览</p>
+                  <div class="preview-answer" id="previewAnswer">为专家命名后才能预览。输入一个问题，这里会展示专家回答风格。</div>
+                </div>
+              </aside>
+            </div>
+          </section>
+
+          <section class="admin-view is-hidden" id="adminView" aria-label="后台管理">
+            <div class="creator-header">
+              <div>
+                <p class="eyebrow">后台管理</p>
+                <h1>统一管理专家上架、知识库挂载和审计能力</h1>
+              </div>
+              <button class="primary-button" id="adminCreateExpert" type="button">上架专家</button>
+            </div>
+
+            <div class="admin-grid">
+              <section class="admin-panel collapsible-section">
+                <div class="admin-panel-head">
+                  <div>
+                    <h2>专家列表</h2>
+                    <p>后台创建或本地保存的专家都会出现在这里。</p>
+                  </div>
+                  <span id="expertCountBadge">0 个专家</span>
+                  <button class="collapse-toggle" type="button" aria-label="收起模块">收起</button>
+                </div>
+                <div class="collapsible-body">
+                  <div class="admin-expert-list" id="adminExpertList"></div>
+                </div>
+              </section>
+
+              <aside class="admin-panel collapsible-section">
+                <div class="admin-panel-head">
+                  <div>
+                    <h2>上架规则</h2>
+                    <p>用户侧只看已上架专家，知识库仅后台可挂载。</p>
+                  </div>
+                  <button class="collapse-toggle" type="button" aria-label="收起模块">收起</button>
+                </div>
+                <div class="collapsible-body">
+                  <div class="rule-list">
+                    <span>用户面板不提供知识库挂载入口。</span>
+                    <span>专家 Prompt、模型、知识库映射由后台统一管理。</span>
+                    <span>自建专家保留在本地，并同步展示到后台专家列表。</span>
+                  </div>
+                </div>
+              </aside>
+            </div>
+
+            <section class="audit-section collapsible-section">
+              <div class="admin-panel-head">
+                <div>
+                  <h2>审计与用量</h2>
+                  <p>按部门追踪专家调用、Token 消耗、风险会话和团队使用情况。</p>
+                </div>
+                <span>今日</span>
+                <button class="collapse-toggle" type="button" aria-label="收起模块">收起</button>
+              </div>
+
+              <div class="collapsible-body">
+                <div class="metric-grid">
+                  <article class="metric-card">
+                    <span>总人数</span>
+                    <strong id="metricPeople">0</strong>
+                  </article>
+                  <article class="metric-card">
+                    <span>Token 消耗</span>
+                    <strong>186.4K</strong>
+                  </article>
+                  <article class="metric-card">
+                    <span>专家调用</span>
+                    <strong>342</strong>
+                  </article>
+                  <article class="metric-card risk">
+                    <span>风险会话</span>
+                    <strong>7</strong>
+                  </article>
+                </div>
+
+                <div class="audit-grid">
+                <section class="admin-panel">
+                  <div class="admin-panel-head">
+                    <div>
+                      <h2>部门结构</h2>
+                      <p>先按你给的组织框架做前端数据占位。</p>
+                    </div>
+                  </div>
+                  <div class="department-list" id="departmentList"></div>
+                </section>
+
+                <section class="admin-panel">
+                  <div class="admin-panel-head">
+                    <div>
+                      <h2>专家调用排行</h2>
+                      <p>后续接入真实对话日志后自动统计。</p>
+                    </div>
+                  </div>
+                  <div class="usage-list">
+                    <div><span>天猫竞争策略教练</span><strong>96</strong></div>
+                    <div><span>电商管理落地顾问</span><strong>72</strong></div>
+                    <div><span>小红书千帆投放专家</span><strong>58</strong></div>
+                    <div><span>爆款裂变分析AI教练</span><strong>41</strong></div>
+                  </div>
+                </section>
+
+                <section class="admin-panel audit-wide">
+                  <div class="admin-panel-head">
+                    <div>
+                      <h2>风险会话</h2>
+                      <p>用于审计敏感内容、超额使用和异常调用。</p>
+                    </div>
+                  </div>
+                  <div class="risk-list" id="riskList"></div>
+                </section>
+              </div>
+              </div>
+            </section>
+
+            <section class="user-section collapsible-section">
+              <div class="admin-panel-head">
+                <div>
+                  <h2>用户与部门管理</h2>
+                  <p>控制员工所属部门、角色权限、每日额度和可见专家。</p>
+                </div>
+                <button class="secondary-button compact" type="button">添加员工</button>
+                <button class="collapse-toggle" type="button" aria-label="收起模块">收起</button>
+              </div>
+
+              <div class="collapsible-body">
+                <div class="user-table">
+                  <div class="user-row user-head">
+                    <span>姓名</span>
+                    <span>部门</span>
+                    <span>角色</span>
+                    <span>今日额度</span>
+                    <span>可见专家</span>
+                  </div>
+                  <div id="userRows"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="permission-section collapsible-section">
+              <div class="admin-panel-head">
+                <div>
+                  <h2>权限与额度配置</h2>
+                  <p>按部门或个人控制每日 Token、Pro 模型权限和可见专家。</p>
+                </div>
+                <button class="secondary-button compact" id="applyPolicy" type="button">应用策略</button>
+                <button class="collapse-toggle" type="button" aria-label="收起模块">收起</button>
+              </div>
+
+              <div class="collapsible-body">
+                <div class="permission-grid">
+                  <label class="form-field">
+                    <span>选择部门</span>
+                    <select id="policyDepartment"></select>
+                  </label>
+                  <label class="form-field">
+                    <span>选择员工</span>
+                    <select id="policyUser"></select>
+                  </label>
+                  <label class="form-field">
+                    <span>每日 Token 额度</span>
+                    <input id="policyQuota" type="number" value="80000" min="1000" step="1000" />
+                  </label>
+                  <label class="checkbox-field permission-toggle">
+                    <input id="policyPro" type="checkbox" checked />
+                    <span>允许使用 Pro 模型</span>
+                  </label>
+                  <label class="checkbox-field permission-toggle">
+                    <input id="policyAudit" type="checkbox" checked />
+                    <span>纳入审计追踪</span>
+                  </label>
+                </div>
+
+                <div class="policy-card" id="policyPreview"></div>
+              </div>
+            </section>
+          </section>
+
+          <section class="knowledge-view is-hidden" id="knowledgeView" aria-label="知识库">
+            <div class="creator-header">
+              <div>
+                <p class="eyebrow">后台知识库</p>
+                <h1>为后台上架专家挂载公司 SOP、案例和复盘资料</h1>
+              </div>
+              <button class="primary-button" id="addKnowledgeDoc" type="button">添加文档</button>
+            </div>
+
+            <div class="knowledge-grid">
+              <section class="upload-panel">
+                <div class="upload-dropzone">
+                  <span aria-hidden="true">＋</span>
+                  <h2>上传知识文件</h2>
+                  <p>支持 PDF、Docx、Markdown、Excel 占位。当前为前端原型，暂不真实解析文件。</p>
+                  <button class="secondary-button compact" id="mockUpload" type="button">模拟上传</button>
+                </div>
+
+                <div class="doc-list" id="docList">
+                  <article class="doc-item">
+                    <span class="doc-icon" aria-hidden="true">PDF</span>
+                    <div>
+                      <h3>天猫店铺复盘SOP.pdf</h3>
+                      <p>绑定：天猫竞争策略教练 · 已向量化</p>
+                    </div>
+                    <strong class="status-ready">Ready</strong>
+                  </article>
+                  <article class="doc-item">
+                    <span class="doc-icon" aria-hidden="true">DOC</span>
+                    <div>
+                      <h3>小红书千帆投放复盘模板.docx</h3>
+                      <p>绑定：小红书千帆投放专家 · 处理中</p>
+                    </div>
+                    <strong class="status-processing">Processing</strong>
+                  </article>
+                </div>
+              </section>
+
+              <aside class="knowledge-detail">
+                <section class="preview-panel">
+                  <h3>挂载设置</h3>
+                  <label class="form-field">
+                    <span>目标专家</span>
+                    <select id="knowledgeExpertSelect">
+                      <option>天猫竞争策略教练</option>
+                      <option>小红书千帆投放专家</option>
+                      <option>爆款裂变分析AI教练</option>
+                      <option>电商管理落地顾问</option>
+                    </select>
+                  </label>
+                  <label class="form-field">
+                    <span>检索策略</span>
+                    <select>
+                      <option>优先引用专家知识</option>
+                      <option>仅当用户提到时引用</option>
+                      <option>关闭引用</option>
+                    </select>
+                  </label>
+                </section>
+
+                <section class="preview-panel">
+                  <h3>RAG 状态</h3>
+                  <div class="rag-steps">
+                    <span>1. 文件上传</span>
+                    <span>2. 文档解析</span>
+                    <span>3. 切片向量化</span>
+                    <span>4. 专家挂载</span>
+                  </div>
+                </section>
+
+                <section class="preview-chat">
+                  <p>提示</p>
+                  <div class="preview-answer">真实 MVP 阶段，这里会把文档上传到 Supabase Storage，再把切片写入向量库，并记录专家与知识库的映射关系。</div>
+                </section>
+              </aside>
+            </div>
+          </section>
+
+          <section class="tool-sections" id="toolSections">
+            <section class="tool-group">
+              <div class="group-title">
+                <span aria-hidden="true">▤</span>
+                <h2>管理工具</h2>
+                <small>4</small>
+              </div>
+              <div class="card-grid">
+                <button class="agent-card placeholder-card" type="button">
+                  <span class="card-icon plus" aria-hidden="true">＋</span>
+                  <span>
+                    <strong>AI 助手</strong>
+                    <small>通用 AI 助手，可以帮你完成各种任务</small>
+                  </span>
+                </button>
+                <button class="agent-card placeholder-card" type="button">
+                  <span class="card-icon chart" aria-hidden="true">▥</span>
+                  <span>
+                    <strong>简历分析</strong>
+                    <small>提炼候选人亮点与风险项</small>
+                  </span>
+                </button>
+                <button class="agent-card placeholder-card" type="button">
+                  <span class="card-icon search" aria-hidden="true">⌕</span>
+                  <span>
+                    <strong>企业卡片自诊系统</strong>
+                    <small>帮你找到短板和运营卡点</small>
+                  </span>
+                </button>
+                <button class="agent-card" data-agent="个人访谈官" type="button">
+                  <span class="card-icon interview" aria-hidden="true">◉</span>
+                  <span>
+                    <strong>个人访谈官</strong>
+                    <small>沉淀访谈线索，整理人物故事与关键观点</small>
+                  </span>
+                </button>
+                <button class="agent-card" data-agent="电商管理落地顾问" type="button">
+                  <span class="card-icon advisor" aria-hidden="true">▦</span>
+                  <span>
+                    <strong>电商管理落地顾问</strong>
+                    <small>用组织、绩效、流程和运营动作提升电商利润率</small>
+                  </span>
+                </button>
+              </div>
+            </section>
+
+            <section class="tool-group">
+              <div class="group-title">
+                <span aria-hidden="true">🛒</span>
+                <h2>电商工具</h2>
+                <small>6</small>
+              </div>
+              <div class="card-grid">
+                <button class="agent-card" data-agent="爆款裂变分析AI教练" type="button">
+                  <span class="card-icon target" aria-hidden="true">◎</span>
+                  <span>
+                    <strong>爆款裂变分析AI教练</strong>
+                    <small>拆解爆款传播逻辑，提炼可复用增长动作</small>
+                  </span>
+                </button>
+                <button class="agent-card" data-agent="天猫竞争策略教练" type="button">
+                  <span class="card-icon document" aria-hidden="true">□</span>
+                  <span>
+                    <strong>天猫竞争策略教练</strong>
+                    <small>分析竞品打法，形成店铺竞争策略建议</small>
+                  </span>
+                </button>
+                <button class="agent-card" data-agent="小红书千帆投放专家" type="button">
+                  <span class="card-icon rocket" aria-hidden="true">↗</span>
+                  <span>
+                    <strong>小红书千帆投放专家</strong>
+                    <small>规划种草投放节奏，优化达人与素材组合</small>
+                  </span>
+                </button>
+                <button class="agent-card placeholder-card" type="button">
+                  <span class="card-icon script" aria-hidden="true">▱</span>
+                  <span>
+                    <strong>短视频脚本生成</strong>
+                    <small>生成高转化的短视频口播脚本</small>
+                  </span>
+                </button>
+                <button class="agent-card placeholder-card" type="button">
+                  <span class="card-icon light" aria-hidden="true">○</span>
+                  <span>
+                    <strong>天猫主图策划教练</strong>
+                    <small>围绕卖点帮你完成主图策划</small>
+                  </span>
+                </button>
+                <button class="agent-card placeholder-card" type="button">
+                  <span class="card-icon review" aria-hidden="true">▣</span>
+                  <span>
+                    <strong>天猫评价教练</strong>
+                    <small>辅助产出高转化评价内容</small>
+                  </span>
+                </button>
+              </div>
+            </section>
+          </section>
+        </div>
+      </section>
+
+      <div class="modal-layer is-hidden" id="summaryModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-card">
+          <div class="modal-header">
+            <div>
+              <p class="eyebrow">专家召唤</p>
+              <h2 id="modalTitle">确认上下文摘要</h2>
+            </div>
+            <button class="close-button" id="closeModal" type="button" aria-label="关闭">×</button>
+          </div>
+          <p class="modal-copy">系统会把当前对话压缩成摘要，再交给专家继续处理。你可以先编辑这段摘要。</p>
+          <textarea id="summaryText" rows="7"></textarea>
+          <div class="modal-actions">
+            <button class="secondary-button" id="cancelSummary" type="button">取消</button>
+            <button class="primary-button" id="confirmSummary" type="button">确认并进入专家模式</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="./data/experts.js"></script>
+    <script src="./data/departments.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

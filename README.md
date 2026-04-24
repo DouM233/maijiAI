@@ -62,3 +62,5 @@
 专家 MVP 架构说明见 `docs/expert-mvp-architecture.md`。
 
 完整项目交接文档见 `docs/project-handoff.md`。
+
+前后端协作文档见 `docs/frontend-backend-collaboration.md`。

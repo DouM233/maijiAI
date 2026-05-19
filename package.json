@@ -1,7 +1,7 @@
 {
   "name": "maijiai",
   "version": "1.0.0",
-  "description": "麦吉AI 企业智能工作台前端原型",
+  "description": "麦吉AI AI工具中心",
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1 --port 5175",
     "build": "next build",

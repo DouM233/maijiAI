@@ -1,8 +1,8 @@
 import "../styles.css";
 
 export const metadata = {
-  title: "麦吉AI - 企业智能工作台",
-  description: "麦吉AI 企业智能工作台前端原型 Next.js 骨架"
+  title: "麦吉AI - AI工具中心",
+  description: "麦吉AI 电商图片、动效和内容工具入口"
 };
 
 export default function RootLayout({ children }) {

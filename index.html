@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>麦吉AI - 企业智能工作台</title>
+    <title>麦吉AI - AI工具中心</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -12,15 +12,15 @@
         <div class="login-panel">
           <div class="brand-mark" aria-hidden="true">M</div>
           <p class="eyebrow">麦吉AI</p>
-          <h1>企业智能工作台</h1>
-          <p class="login-copy">用统一入口管理 AI 对话、专家卡片和业务知识，让团队更快完成增长、投放与访谈分析。</p>
+          <h1>AI工具中心</h1>
+          <p class="login-copy">把常用的电商图片、动效和内容工具放在一个入口里，打开就能用。</p>
           <div class="notice-box">
-            <strong>合规使用告知</strong>
-            <span>本原型默认保存对话记录用于内部审计与业务复盘，请勿输入个人隐私、客户敏感信息或未授权资料。</span>
+            <strong>使用提醒</strong>
+            <span>部分工具会跳转到独立页面，请按业务需要上传素材，避免提交个人隐私或客户敏感信息。</span>
           </div>
           <button class="ding-login" id="dingLogin" type="button">
             <span class="ding-icon" aria-hidden="true">D</span>
-            钉钉登录
+            进入工具中心
           </button>
         </div>
       </section>
@@ -46,7 +46,7 @@
           <nav class="nav-list" aria-label="主导航">
             <button class="nav-item active" id="newChatNav" type="button">
               <span aria-hidden="true">✎</span>
-              发起新对话
+              工具首页
             </button>
             <button class="nav-item" type="button">
               <span aria-hidden="true">☆</span>
@@ -60,10 +60,10 @@
 
           <div class="sidebar-section">
             <div class="section-label">
-              <span>智能体</span>
+              <span>工具状态</span>
               <span aria-hidden="true">›</span>
             </div>
-            <button class="muted-link" type="button">登录后显示常用智能体</button>
+            <button class="muted-link" type="button">已接入工具会优先展示</button>
           </div>
 
           <div class="sidebar-section history-area">
@@ -99,9 +99,9 @@
           <header class="topbar">
             <div class="product-name">
               <span class="spark" aria-hidden="true">✦</span>
-              <span>麦吉AI 企业智能工作台</span>
+              <span>麦吉AI 工具中心</span>
             </div>
-            <button class="account-button" type="button">体验账号</button>
+            <button class="account-button" type="button">工具入口</button>
           </header>
 
           <section class="chat-view is-hidden" id="chatView" aria-label="对话内容">
@@ -119,13 +119,13 @@
             <div class="hero-head">
               <div class="greeting">
                 <p>你好</p>
-                <h1>需要我为你做些什么？</h1>
+                <h1>今天要处理哪类素材？</h1>
               </div>
               <img class="ip-mascot" src="./assets/maiji-ip.png" alt="麦吉AI IP形象" />
             </div>
 
             <section class="composer" aria-label="AI 对话输入框">
-              <textarea id="promptInput" rows="2" placeholder="在这里输入任何问题..."></textarea>
+              <textarea id="promptInput" rows="2" placeholder="输入你的素材需求，或直接点击下方工具卡片..."></textarea>
               <div class="composer-tools">
                 <div class="tool-left">
                   <button class="small-icon" type="button" aria-label="添加附件">＋</button>

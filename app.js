@@ -53,6 +53,7 @@ const expertConfigs = window.MAIJI_EXPERTS || {};
 const departments = window.MAIJI_DEPARTMENTS || [];
 const users = window.MAIJI_USERS || [];
 const riskSessions = window.MAIJI_RISK_SESSIONS || [];
+const toolLinks = window.MAIJI_TOOL_LINKS || {};
 const customExpertStorageKey = "maiji_custom_experts";
 let selectedModel = "GPT 快速";
 let pendingExpert = "";
@@ -375,6 +376,30 @@ document.addEventListener("click", (event) => {
 });
 
 function bindAgentCard(card) {
+  const toolId = card.dataset.toolId;
+  const tool = toolId ? toolLinks[toolId] : null;
+
+  if (tool?.url) {
+    card.addEventListener("click", () => {
+      window.open(tool.url, "_blank", "noopener,noreferrer");
+    });
+    card.setAttribute("title", `打开${tool.name || "工具"}`);
+    return;
+  }
+
+  if (tool) {
+    card.classList.add("is-pending");
+    card.setAttribute("title", `${tool.name || "工具"}正在接入`);
+    const textWrap = card.querySelector("span:last-child");
+    if (textWrap && !textWrap.querySelector(".tool-status")) {
+      const status = document.createElement("em");
+      status.className = "tool-status";
+      status.textContent = tool.status || "待接入";
+      textWrap.append(status);
+    }
+    return;
+  }
+
   card.addEventListener("click", () => {
     pendingExpert = card.dataset.agent;
     summaryText.value = buildExpertSummary(pendingExpert);
@@ -383,7 +408,7 @@ function bindAgentCard(card) {
   });
 }
 
-document.querySelectorAll("[data-agent]").forEach(bindAgentCard);
+document.querySelectorAll(".agent-card").forEach(bindAgentCard);
 
 function createExpertCard(expert) {
   const group = Array.from(document.querySelectorAll(".tool-group")).find((section) => {

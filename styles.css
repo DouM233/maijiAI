@@ -43,6 +43,10 @@ button {
   display: none !important;
 }
 
+.is-retired {
+  display: none !important;
+}
+
 .app-shell {
   min-height: 100vh;
 }
@@ -1408,6 +1412,16 @@ button {
   box-shadow: 0 16px 34px rgba(65, 91, 122, 0.13);
 }
 
+.agent-card.is-pending {
+  cursor: default;
+}
+
+.agent-card.is-pending:hover {
+  transform: none;
+  border-color: #e3ebf5;
+  box-shadow: var(--soft-shadow);
+}
+
 .agent-card strong,
 .agent-card small {
   display: block;
@@ -1422,6 +1436,20 @@ button {
 .agent-card small {
   color: #657388;
   line-height: 1.45;
+}
+
+.tool-status {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 0.45rem;
+  padding: 0.18rem 0.46rem;
+  border: 1px solid #d8e8fb;
+  border-radius: 999px;
+  color: #4d6f9e;
+  background: #f5faff;
+  font-size: 0.72rem;
+  line-height: 1.2;
 }
 
 .card-icon {

@@ -1,18 +1,18 @@
 window.MAIJI_TOOL_LINKS = {
   "ai-assistant": {
-    name: "AI 助手",
-    url: "",
-    status: "待接入"
+    name: "麦吉AI买家秀生成器",
+    url: "https://maijiai.coze.site/",
+    status: "已上线"
   },
   "resume-analyzer": {
-    name: "简历分析",
-    url: "",
-    status: "待接入"
+    name: "麦吉AI推广图生成器",
+    url: "https://vision-loop.coze.site/",
+    status: "已上线"
   },
   "business-card-diagnosis": {
-    name: "企业卡片自诊系统",
-    url: "",
-    status: "待接入"
+    name: "麦吉AI GIF处理器",
+    url: "https://maijigif.coze.site/",
+    status: "已上线"
   },
   "personal-interviewer": {
     name: "个人访谈官",

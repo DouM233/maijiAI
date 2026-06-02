@@ -14,6 +14,9 @@ export default function HomePage() {
       <Script id="maiji-departments" strategy="afterInteractive">
         {template.departmentsScript}
       </Script>
+      <Script id="maiji-agents" strategy="afterInteractive">
+        {template.agentsScript}
+      </Script>
       <Script id="maiji-tool-links" strategy="afterInteractive">
         {template.toolLinksScript}
       </Script>

@@ -3,6 +3,8 @@ const workspace = document.querySelector("#workspace");
 const dingLogin = document.querySelector("#dingLogin");
 const promptInput = document.querySelector("#promptInput");
 const sendButton = document.querySelector("#sendButton");
+const composer = document.querySelector(".composer");
+const toolLeft = document.querySelector(".tool-left");
 const modelSwitcher = document.querySelector("#modelSwitcher");
 const modelSelect = document.querySelector("#modelSelect");
 const modelLabel = document.querySelector("#modelLabel");
@@ -53,15 +55,195 @@ const expertConfigs = window.MAIJI_EXPERTS || {};
 const departments = window.MAIJI_DEPARTMENTS || [];
 const users = window.MAIJI_USERS || [];
 const riskSessions = window.MAIJI_RISK_SESSIONS || [];
+const agentConfigs = window.MAIJI_AGENTS || {};
 const toolLinks = window.MAIJI_TOOL_LINKS || {};
 const customExpertStorageKey = "maiji_custom_experts";
-let selectedModel = "GPT 快速";
+const defaultChatModel = "gpt-5.4-mini";
+let selectedModel = "GPT5.4快速";
+let selectedModelApi = defaultChatModel;
 let pendingExpert = "";
 let activeExpert = "";
 let isGenerating = false;
+let currentConversationId = "";
+let currentConversationMessages = [];
+let uploadedAttachments = [];
+
+const fileInput = document.createElement("input");
+fileInput.type = "file";
+fileInput.multiple = true;
+fileInput.accept = ".pdf,.doc,.docx,.txt,.md,.csv,.json";
+fileInput.className = "hidden-file-input";
+
+const attachmentTray = document.createElement("div");
+attachmentTray.className = "attachment-tray is-hidden";
+
+const dropHint = document.createElement("div");
+dropHint.className = "drop-hint is-hidden";
+dropHint.textContent = "松开以上传简历或文本文件";
+
+document.body.append(fileInput);
+composer?.insertBefore(attachmentTray, composer.firstChild);
+composer?.append(dropHint);
 
 function isCompactLayout() {
   return window.innerWidth <= 980;
+}
+
+function getCurrentConversationId() {
+  if (!currentConversationId) {
+    currentConversationId = `conv-${Date.now()}`;
+  }
+  return currentConversationId;
+}
+
+function getResolvedApiModel() {
+  return selectedModelApi || defaultChatModel;
+}
+
+function updateSendReadyState() {
+  const hasText = promptInput.value.trim().length > 0;
+  const hasAttachments = uploadedAttachments.length > 0;
+  sendButton.classList.toggle("ready", hasText || hasAttachments);
+}
+
+function renderAttachmentTray() {
+  attachmentTray.innerHTML = "";
+  attachmentTray.classList.toggle("is-hidden", uploadedAttachments.length === 0);
+
+  uploadedAttachments.forEach((file, index) => {
+    const chip = document.createElement("article");
+    chip.className = "attachment-chip";
+    chip.innerHTML = `
+      <div class="attachment-chip-copy">
+        <strong>${file.name}</strong>
+        <small>${file.statusText || file.kind || "已解析"}</small>
+      </div>
+      <button class="attachment-remove" type="button" aria-label="移除附件">×</button>
+    `;
+    chip.querySelector(".attachment-remove")?.addEventListener("click", () => {
+      uploadedAttachments.splice(index, 1);
+      renderAttachmentTray();
+      updateSendReadyState();
+    });
+    attachmentTray.append(chip);
+  });
+}
+
+function clearAttachments() {
+  uploadedAttachments = [];
+  fileInput.value = "";
+  renderAttachmentTray();
+  updateSendReadyState();
+}
+
+async function parseFiles(files) {
+  const formData = new FormData();
+  Array.from(files).forEach((file) => formData.append("files", file));
+
+  const response = await fetch("/api/parse-file", {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error || "文件解析失败");
+  }
+
+  return Array.isArray(data?.files) ? data.files : [];
+}
+
+async function handleIncomingFiles(fileList) {
+  const files = Array.from(fileList || []).filter(Boolean);
+  if (!files.length) return;
+
+  composer?.classList.add("is-uploading");
+  try {
+    const parsedFiles = await parseFiles(files);
+    uploadedAttachments = uploadedAttachments.concat(
+      parsedFiles.map((item) => ({
+        name: item.name,
+        kind: item.kind,
+        content: item.content,
+        statusText: item.statusText || `已解析 ${item.kind || "文件"}`
+      }))
+    );
+    renderAttachmentTray();
+    updateSendReadyState();
+  } finally {
+    composer?.classList.remove("is-uploading");
+  }
+}
+
+function buildMessageWithAttachments(text) {
+  if (!uploadedAttachments.length) {
+    return text.trim();
+  }
+
+  const sections = uploadedAttachments.map((file, index) => {
+    const excerpt = String(file.content || "").trim();
+    return [
+      `### 附件 ${index + 1}`,
+      `文件名：${file.name}`,
+      `文件类型：${file.kind || "文本"}`,
+      "文件内容：",
+      excerpt
+    ].join("\n");
+  });
+
+  return [text.trim(), "## 附件材料", ...sections].filter(Boolean).join("\n\n");
+}
+
+function buildAgentSystemPrompt() {
+  if (!activeExpert) return "";
+
+  const config = agentConfigs[activeExpert];
+  if (config && typeof config.systemPrompt === "string") {
+    return config.systemPrompt;
+  }
+
+  const expert = getExpertConfig(activeExpert);
+  if (!expert) return "";
+
+  return [
+    `你现在是「${expert.name}」智能体。`,
+    `专家定位：${expert.profile?.expertise || ""}`,
+    `沟通语气：${expert.profile?.tone || ""}`,
+    `语言风格：${expert.profile?.language || ""}`,
+    `核心目标：${(expert.goals || []).join("；")}`,
+    `工作流：${(expert.workflow || []).join(" -> ")}`
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+async function requestChatReply(message) {
+  const history = currentConversationMessages.slice(0, -1);
+  const response = await fetch("/api/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message,
+      model: getResolvedApiModel(),
+      agentId: activeExpert || "",
+      conversationId: getCurrentConversationId(),
+      history,
+      systemPrompt: buildAgentSystemPrompt()
+    })
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.details || data?.error || "Chat request failed.");
+  }
+
+  if (data?.conversationId) {
+    currentConversationId = data.conversationId;
+  }
+
+  return data;
 }
 
 function syncSidebarMenuState(isOpen) {
@@ -114,6 +296,385 @@ function buildExpertReply(text) {
     `你刚才的问题是“${text}”。`,
     `先做单点突破：请先补充一个最关键的数据，比如 ROI、转化率、人效、客单价或投放成本。没有真实数据，我不会给你空泛建议。`
   ].join("");
+}
+
+function getAgentConfig(agentId) {
+  return agentConfigs[agentId] || null;
+}
+
+function getAssistantLabel() {
+  const agent = getAgentConfig(activeExpert);
+  if (agent?.name) return agent.name;
+  if (activeExpert) return activeExpert;
+  return selectedModel;
+}
+
+function getAgentPlaceholder() {
+  const agent = getAgentConfig(activeExpert);
+  if (agent?.placeholder) return agent.placeholder;
+  if (activeExpert) return `正在使用「${getAssistantLabel()}」，请输入你的任务或素材...`;
+  return "在这里输入任何问题...";
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function renderInlineMarkdown(value) {
+  let output = escapeHtml(value);
+  output = output.replace(/`([^`]+)`/g, "<code>$1</code>");
+  output = output.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  output = output.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+  return output;
+}
+
+function isTableSeparatorLine(line) {
+  return /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(line.trim());
+}
+
+function renderMarkdownTable(lines) {
+  if (lines.length < 2) return `<p>${renderInlineMarkdown(lines.join(" "))}</p>`;
+
+  const headerCells = lines[0]
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+  const bodyLines = lines.slice(2);
+
+  const headerHtml = headerCells.map((cell) => `<th>${renderInlineMarkdown(cell)}</th>`).join("");
+  const bodyHtml = bodyLines
+    .map((line) => {
+      const cells = line
+        .trim()
+        .replace(/^\|/, "")
+        .replace(/\|$/, "")
+        .split("|")
+        .map((cell) => `<td>${renderInlineMarkdown(cell.trim())}</td>`)
+        .join("");
+      return `<tr>${cells}</tr>`;
+    })
+    .join("");
+
+  return `<div class="markdown-table-wrap"><table><thead><tr>${headerHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`;
+}
+
+function renderMarkdown(text) {
+  const lines = String(text || "").replace(/\r\n/g, "\n").split("\n");
+  const parts = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index];
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      index += 1;
+      continue;
+    }
+
+    if (trimmed.startsWith("```")) {
+      const block = [];
+      index += 1;
+      while (index < lines.length && !lines[index].trim().startsWith("```")) {
+        block.push(lines[index]);
+        index += 1;
+      }
+      if (index < lines.length) index += 1;
+      parts.push(`<pre><code>${escapeHtml(block.join("\n"))}</code></pre>`);
+      continue;
+    }
+
+    if (trimmed.includes("|") && index + 1 < lines.length && isTableSeparatorLine(lines[index + 1])) {
+      const tableLines = [line, lines[index + 1]];
+      index += 2;
+      while (index < lines.length && lines[index].trim().includes("|")) {
+        tableLines.push(lines[index]);
+        index += 1;
+      }
+      parts.push(renderMarkdownTable(tableLines));
+      continue;
+    }
+
+    const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      parts.push(`<h${level}>${renderInlineMarkdown(headingMatch[2])}</h${level}>`);
+      index += 1;
+      continue;
+    }
+
+    if (trimmed.startsWith(">")) {
+      const block = [];
+      while (index < lines.length && lines[index].trim().startsWith(">")) {
+        block.push(renderInlineMarkdown(lines[index].trim().replace(/^>\s?/, "")));
+        index += 1;
+      }
+      parts.push(`<blockquote>${block.join("<br>")}</blockquote>`);
+      continue;
+    }
+
+    if (/^\s*[-*]\s+/.test(line)) {
+      const items = [];
+      while (index < lines.length && /^\s*[-*]\s+/.test(lines[index])) {
+        items.push(`<li>${renderInlineMarkdown(lines[index].replace(/^\s*[-*]\s+/, "").trim())}</li>`);
+        index += 1;
+      }
+      parts.push(`<ul>${items.join("")}</ul>`);
+      continue;
+    }
+
+    if (/^\s*\d+\.\s+/.test(line)) {
+      const items = [];
+      while (index < lines.length && /^\s*\d+\.\s+/.test(lines[index])) {
+        items.push(`<li>${renderInlineMarkdown(lines[index].replace(/^\s*\d+\.\s+/, "").trim())}</li>`);
+        index += 1;
+      }
+      parts.push(`<ol>${items.join("")}</ol>`);
+      continue;
+    }
+
+    const paragraph = [];
+    while (
+      index < lines.length &&
+      lines[index].trim() &&
+      !/^(#{1,6})\s+/.test(lines[index].trim()) &&
+      !lines[index].trim().startsWith(">") &&
+      !/^\s*[-*]\s+/.test(lines[index]) &&
+      !/^\s*\d+\.\s+/.test(lines[index]) &&
+      !(lines[index].trim().includes("|") && index + 1 < lines.length && isTableSeparatorLine(lines[index + 1]))
+    ) {
+      paragraph.push(renderInlineMarkdown(lines[index].trim()));
+      index += 1;
+    }
+    parts.push(`<p>${paragraph.join("<br>")}</p>`);
+  }
+
+  return parts.join("");
+}
+
+function renderMessageContent(node, text, useMarkdown) {
+  node.className = useMarkdown ? "message-content markdown-body" : "message-content";
+  if (useMarkdown) {
+    node.innerHTML = renderMarkdown(text);
+  } else {
+    node.textContent = text;
+  }
+}
+
+function buildExpertSummary(name) {
+  const agent = getAgentConfig(name);
+  if (agent?.summaryPrompt) {
+    return agent.summaryPrompt;
+  }
+
+  const expert = getExpertConfig(name);
+  if (!expert) {
+    return "请总结当前对话里的关键信息、目标和待办项，然后交给该智能体继续处理。";
+  }
+
+  return [
+    `即将启用专家：${expert.name}`,
+    `专家定位：${expert.profile.expertise}`,
+    `沟通语气：${expert.profile.tone}`,
+    `语言风格：${expert.profile.language}`,
+    `核心目标：${expert.goals.join("；")}`,
+    `工作流：${expert.workflow.join(" -> ")}`
+  ].join("\n");
+}
+
+function openConversation(text) {
+  contentArea.classList.add("chat-mode");
+  chatView.classList.remove("is-hidden");
+  chatTitle.textContent = activeExpert
+    ? getAssistantLabel()
+    : text.length > 18
+      ? `${text.slice(0, 18)}...`
+      : text || "新的麦吉AI对话";
+}
+
+function addMessage(role, text, options = {}) {
+  const { markdown = role === "ai" } = options;
+  const message = document.createElement("article");
+  message.className = `message ${role}`;
+
+  const avatar = document.createElement("span");
+  avatar.className = "message-avatar";
+  avatar.textContent = role === "user" ? "我" : "麦";
+
+  const bubble = document.createElement("div");
+  bubble.className = "message-bubble";
+
+  const meta = document.createElement("div");
+  meta.className = "message-meta";
+  meta.textContent = role === "user" ? "你" : getAssistantLabel();
+
+  const content = document.createElement("div");
+  renderMessageContent(content, text, markdown);
+
+  bubble.append(meta, content);
+
+  if (role === "user") {
+    message.append(bubble, avatar);
+  } else {
+    message.append(avatar, bubble);
+  }
+
+  messageList.append(message);
+  messageList.scrollTop = messageList.scrollHeight;
+}
+
+function addStreamingMessage(role, text) {
+  const message = document.createElement("article");
+  message.className = `message ${role}`;
+
+  const avatar = document.createElement("span");
+  avatar.className = "message-avatar";
+  avatar.textContent = "麦";
+
+  const bubble = document.createElement("div");
+  bubble.className = "message-bubble";
+
+  const meta = document.createElement("div");
+  meta.className = "message-meta";
+  meta.textContent = getAssistantLabel();
+
+  const content = document.createElement("div");
+  content.className = "message-content";
+  bubble.append(meta, content);
+  message.append(avatar, bubble);
+  messageList.append(message);
+
+  let index = 0;
+  const timer = window.setInterval(() => {
+    content.textContent = text.slice(0, index + 1);
+    index += 1;
+    messageList.scrollTop = messageList.scrollHeight;
+
+    if (index >= text.length) {
+      window.clearInterval(timer);
+      renderMessageContent(content, text, true);
+      isGenerating = false;
+      sendButton.textContent = "▶";
+      sendButton.setAttribute("aria-label", "发送");
+      sendButton.classList.toggle("ready", promptInput.value.trim().length > 0);
+    }
+  }, 14);
+}
+
+function activateAgent(agentId, options = {}) {
+  const { showWelcome = true } = options;
+  const agent = getAgentConfig(agentId);
+  const expert = getExpertConfig(agentId);
+
+  activeExpert = agentId;
+  activeExpertName.textContent = agent?.name || expert?.name || agentId;
+  expertState.classList.remove("is-hidden");
+  expertState.style.display = "flex";
+
+  if (agent?.allowModelSwitch) {
+    modelSelect.classList.remove("locked");
+    modelLabel.textContent = selectedModel;
+  } else {
+    modelSelect.classList.add("locked");
+    modelLabel.textContent = expert ? expert.boundModel : `${activeExpertName.textContent} 专属模型`;
+  }
+
+  closeModelMenu();
+  closeSummaryModal();
+  currentConversationId = "";
+  currentConversationMessages = [];
+  messageList.innerHTML = "";
+  promptInput.placeholder = getAgentPlaceholder();
+  openConversation("");
+
+  if (showWelcome && agent?.openingMessage) {
+    currentConversationMessages.push({ role: "assistant", content: agent.openingMessage });
+    addMessage("ai", agent.openingMessage, { markdown: true });
+  }
+
+  promptInput.focus();
+}
+
+function bindAgentCard(card) {
+  const toolId = card.dataset.toolId;
+  const tool = toolId ? toolLinks[toolId] : null;
+  const agentId = card.dataset.agent;
+  const agent = agentId ? getAgentConfig(agentId) : null;
+
+  if (agent?.directEntry) {
+    card.addEventListener(
+      "click",
+      (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        activateAgent(agentId, { showWelcome: true });
+      },
+      { capture: true }
+    );
+    card.setAttribute("title", `进入${agent.name}`);
+    return;
+  }
+
+  if (tool?.url) {
+    card.addEventListener("click", () => {
+      window.open(tool.url, "_blank", "noopener,noreferrer");
+    });
+    card.setAttribute("title", `打开${tool.name || "工具"}`);
+    return;
+  }
+
+  if (tool) {
+    card.classList.add("is-pending");
+    card.setAttribute("title", `${tool.name || "工具"}正在接入`);
+    const textWrap = card.querySelector("span:last-child");
+    if (textWrap && !textWrap.querySelector(".tool-status")) {
+      const status = document.createElement("em");
+      status.className = "tool-status";
+      status.textContent = tool.status || "待接入";
+      textWrap.append(status);
+    }
+    return;
+  }
+
+  card.addEventListener("click", () => {
+    pendingExpert = card.dataset.agent;
+    summaryText.value = buildExpertSummary(pendingExpert);
+    summaryModal.classList.remove("is-hidden");
+    summaryText.focus();
+  });
+}
+
+function resetConversation() {
+  setActiveNav(newChatNav);
+  closeSidebarMenu();
+  currentConversationId = "";
+  currentConversationMessages = [];
+  activeExpert = "";
+  activeExpertName.textContent = "";
+  messageList.innerHTML = "";
+  contentArea.classList.remove("chat-mode");
+  contentArea.classList.remove("creator-mode");
+  contentArea.classList.remove("knowledge-mode");
+  contentArea.classList.remove("admin-mode");
+  creatorView.classList.add("is-hidden");
+  knowledgeView.classList.add("is-hidden");
+  adminView.classList.add("is-hidden");
+  chatView.classList.add("is-hidden");
+  expertState.classList.add("is-hidden");
+  expertState.style.display = "";
+  modelSelect.classList.remove("locked");
+  modelLabel.textContent = selectedModel;
+  chatTitle.textContent = "新的麦吉AI对话";
+  clearAttachments();
+  promptInput.placeholder = getAgentPlaceholder();
+  promptInput.focus();
 }
 
 const creatorFields = {
@@ -217,28 +778,31 @@ dingLogin.addEventListener("click", () => {
 });
 
 promptInput.addEventListener("input", () => {
-  sendButton.classList.toggle("ready", promptInput.value.trim().length > 0);
+  updateSendReadyState();
 });
 
-sendButton.addEventListener("click", () => {
+sendButton.addEventListener("click", async () => {
   const text = promptInput.value.trim();
-  if (!text || isGenerating) return;
+  if ((!text && !uploadedAttachments.length) || isGenerating) return;
 
-  openConversation(text);
-  addMessage("user", text);
+  const outboundText = buildMessageWithAttachments(text || "请结合我上传的附件继续分析。");
+
+  currentConversationMessages.push({ role: "user", content: outboundText });
+  openConversation(text || "附件分析");
+  addMessage("user", text || "请结合我上传的附件继续分析。", { markdown: false });
   addThinkingMessage();
-  window.setTimeout(() => {
-    replaceThinkingMessage(text);
-  }, 650);
 
   const item = document.createElement("button");
   item.className = "history-item";
   item.type = "button";
-  item.textContent = text.length > 14 ? `${text.slice(0, 14)}...` : text;
+  item.textContent = (text || "附件分析").length > 14 ? `${(text || "附件分析").slice(0, 14)}...` : (text || "附件分析");
   historyList.prepend(item);
 
   promptInput.value = "";
+  clearAttachments();
   sendButton.classList.remove("ready");
+
+  await replaceThinkingMessage(outboundText);
 });
 
 function openConversation(text) {
@@ -296,10 +860,23 @@ function addThinkingMessage() {
   messageList.scrollTop = messageList.scrollHeight;
 }
 
-function replaceThinkingMessage(text) {
+async function replaceThinkingMessage(text) {
   const thinking = messageList.querySelector(".thinking");
   if (thinking) thinking.remove();
-  addStreamingMessage("ai", buildExpertReply(text));
+
+  try {
+    const data = await requestChatReply(text);
+    const reply = typeof data?.reply === "string" ? data.reply : buildExpertReply(text);
+    currentConversationMessages.push({ role: "assistant", content: reply });
+    addStreamingMessage("ai", reply);
+  } catch (error) {
+    const fallbackReply =
+      error instanceof Error
+        ? `聊天接口暂时不可用：${error.message}`
+        : "聊天接口暂时不可用，请稍后再试。";
+    currentConversationMessages.push({ role: "assistant", content: fallbackReply });
+    addStreamingMessage("ai", fallbackReply);
+  }
 }
 
 function addStreamingMessage(role, text) {
@@ -360,7 +937,11 @@ modelSelect.addEventListener("click", (event) => {
 
 document.querySelectorAll(".model-option").forEach((option) => {
   option.addEventListener("click", () => {
-    selectedModel = option.dataset.model;
+    if (option.disabled || option.classList.contains("is-disabled")) {
+      return;
+    }
+    selectedModel = option.dataset.label || option.dataset.model;
+    selectedModelApi = option.dataset.model || defaultChatModel;
     modelLabel.textContent = selectedModel;
     document.querySelectorAll(".model-option").forEach((item) => {
       item.classList.toggle("selected", item === option);
@@ -408,14 +989,100 @@ function bindAgentCard(card) {
   });
 }
 
+function setupResumeAnalysisCard() {
+  const countBadge = document.querySelector(".group-title small");
+  if (countBadge) {
+    countBadge.textContent = "4";
+  }
+
+  const placeholderCard = document.querySelector('[data-tool-id="coming-soon-tool"]');
+  if (!placeholderCard) return;
+
+  placeholderCard.classList.remove("placeholder-card");
+  placeholderCard.classList.add("agent-entry");
+  placeholderCard.removeAttribute("data-tool-id");
+  placeholderCard.dataset.agent = "resume-analysis";
+
+  const title = placeholderCard.querySelector("strong");
+  const description = placeholderCard.querySelector("small");
+  if (title) title.textContent = "简历分析";
+  if (description) {
+    description.textContent = "按电商业务结果、冰山八维与用人风险输出结构化结论";
+  }
+}
+
+setupResumeAnalysisCard();
 document.querySelectorAll(".agent-card").forEach(bindAgentCard);
+
+toolLeft?.addEventListener("click", () => {
+  fileInput.click();
+});
+
+fileInput.addEventListener("change", async (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement) || !target.files?.length) return;
+  try {
+    await handleIncomingFiles(target.files);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "文件解析失败，请稍后再试。";
+    addMessage("ai", `上传暂时失败：${message}`);
+  }
+});
+
+promptInput.addEventListener("paste", async (event) => {
+  const files = Array.from(event.clipboardData?.files || []);
+  if (!files.length) return;
+  event.preventDefault();
+  try {
+    await handleIncomingFiles(files);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "文件解析失败，请稍后再试。";
+    addMessage("ai", `上传暂时失败：${message}`);
+  }
+});
+
+["dragenter", "dragover"].forEach((eventName) => {
+  composer?.addEventListener(eventName, (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    composer.classList.add("is-dragover");
+    dropHint.classList.remove("is-hidden");
+  });
+});
+
+["dragleave", "dragend"].forEach((eventName) => {
+  composer?.addEventListener(eventName, (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.target === composer || event.target === promptInput) {
+      composer.classList.remove("is-dragover");
+      dropHint.classList.add("is-hidden");
+    }
+  });
+});
+
+composer?.addEventListener("drop", async (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  composer.classList.remove("is-dragover");
+  dropHint.classList.add("is-hidden");
+  const files = Array.from(event.dataTransfer?.files || []);
+  if (!files.length) return;
+  try {
+    await handleIncomingFiles(files);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "文件解析失败，请稍后再试。";
+    addMessage("ai", `上传暂时失败：${message}`);
+  }
+});
 
 function createExpertCard(expert) {
   const group = Array.from(document.querySelectorAll(".tool-group")).find((section) => {
     const title = section.querySelector("h2");
     return title && title.textContent === expert.category;
   });
-  const grid = group ? group.querySelector(".card-grid") : toolSections.querySelector(".card-grid");
+  if (!group) return;
+  const grid = group.querySelector(".card-grid");
   if (!grid) return;
 
   const card = document.createElement("button");
@@ -701,6 +1368,8 @@ exitExpert.addEventListener("click", () => {
 function resetConversation() {
   setActiveNav(newChatNav);
   closeSidebarMenu();
+  currentConversationId = "";
+  currentConversationMessages = [];
   messageList.innerHTML = "";
   contentArea.classList.remove("chat-mode");
   contentArea.classList.remove("creator-mode");
@@ -771,6 +1440,184 @@ renderUsers();
 renderPolicyDepartments();
 updatePolicyPreview();
 bindCollapsibleSections();
+
+function openConversation(text) {
+  contentArea.classList.add("chat-mode");
+  chatView.classList.remove("is-hidden");
+  chatTitle.textContent = activeExpert
+    ? getAssistantLabel()
+    : text.length > 18
+      ? `${text.slice(0, 18)}...`
+      : text || "新的麦吉AI对话";
+}
+
+function addMessage(role, text, options = {}) {
+  const { markdown = role === "ai" } = options;
+  const message = document.createElement("article");
+  message.className = `message ${role}`;
+
+  const avatar = document.createElement("span");
+  avatar.className = "message-avatar";
+  avatar.textContent = role === "user" ? "我" : "麦";
+
+  const bubble = document.createElement("div");
+  bubble.className = "message-bubble";
+
+  const meta = document.createElement("div");
+  meta.className = "message-meta";
+  meta.textContent = role === "user" ? "你" : getAssistantLabel();
+
+  const content = document.createElement("div");
+  renderMessageContent(content, text, markdown);
+  bubble.append(meta, content);
+
+  if (role === "user") {
+    message.append(bubble, avatar);
+  } else {
+    message.append(avatar, bubble);
+  }
+
+  messageList.append(message);
+  messageList.scrollTop = messageList.scrollHeight;
+}
+
+function addStreamingMessage(role, text) {
+  const message = document.createElement("article");
+  message.className = `message ${role}`;
+
+  const avatar = document.createElement("span");
+  avatar.className = "message-avatar";
+  avatar.textContent = "麦";
+
+  const bubble = document.createElement("div");
+  bubble.className = "message-bubble";
+
+  const meta = document.createElement("div");
+  meta.className = "message-meta";
+  meta.textContent = getAssistantLabel();
+
+  const content = document.createElement("div");
+  content.className = "message-content";
+  bubble.append(meta, content);
+  message.append(avatar, bubble);
+  messageList.append(message);
+
+  let index = 0;
+  const timer = window.setInterval(() => {
+    content.textContent = text.slice(0, index + 1);
+    index += 1;
+    messageList.scrollTop = messageList.scrollHeight;
+
+    if (index >= text.length) {
+      window.clearInterval(timer);
+      renderMessageContent(content, text, true);
+      isGenerating = false;
+      sendButton.textContent = "▶";
+      sendButton.setAttribute("aria-label", "发送");
+      sendButton.classList.toggle("ready", promptInput.value.trim().length > 0);
+    }
+  }, 14);
+}
+
+function bindAgentCard(card) {
+  const toolId = card.dataset.toolId;
+  const tool = toolId ? toolLinks[toolId] : null;
+  const agentId = card.dataset.agent;
+  const agent = agentId ? getAgentConfig(agentId) : null;
+
+  if (agent?.directEntry) {
+    card.addEventListener(
+      "click",
+      (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        activateAgent(agentId, { showWelcome: true });
+      },
+      { capture: true }
+    );
+    card.setAttribute("title", `进入${agent.name}`);
+    return;
+  }
+
+  if (tool?.url) {
+    card.addEventListener("click", () => {
+      window.open(tool.url, "_blank", "noopener,noreferrer");
+    });
+    card.setAttribute("title", `打开${tool.name || "工具"}`);
+    return;
+  }
+
+  if (tool) {
+    card.classList.add("is-pending");
+    card.setAttribute("title", `${tool.name || "工具"}正在接入`);
+    const textWrap = card.querySelector("span:last-child");
+    if (textWrap && !textWrap.querySelector(".tool-status")) {
+      const status = document.createElement("em");
+      status.className = "tool-status";
+      status.textContent = tool.status || "待接入";
+      textWrap.append(status);
+    }
+    return;
+  }
+
+  card.addEventListener("click", () => {
+    pendingExpert = card.dataset.agent;
+    summaryText.value = buildExpertSummary(pendingExpert);
+    summaryModal.classList.remove("is-hidden");
+    summaryText.focus();
+  });
+}
+
+function resetConversation() {
+  setActiveNav(newChatNav);
+  closeSidebarMenu();
+  currentConversationId = "";
+  currentConversationMessages = [];
+  activeExpert = "";
+  activeExpertName.textContent = "";
+  messageList.innerHTML = "";
+  contentArea.classList.remove("chat-mode");
+  contentArea.classList.remove("creator-mode");
+  contentArea.classList.remove("knowledge-mode");
+  contentArea.classList.remove("admin-mode");
+  creatorView.classList.add("is-hidden");
+  knowledgeView.classList.add("is-hidden");
+  adminView.classList.add("is-hidden");
+  chatView.classList.add("is-hidden");
+  expertState.classList.add("is-hidden");
+  expertState.style.display = "";
+  modelSelect.classList.remove("locked");
+  modelLabel.textContent = selectedModel;
+  chatTitle.textContent = "新的麦吉AI对话";
+  promptInput.placeholder = getAgentPlaceholder();
+  promptInput.focus();
+}
+
+confirmSummary.addEventListener(
+  "click",
+  (event) => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    activateAgent(pendingExpert, { showWelcome: false });
+  },
+  { capture: true }
+);
+
+exitExpert.addEventListener(
+  "click",
+  (event) => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    activeExpert = "";
+    activeExpertName.textContent = "";
+    expertState.classList.add("is-hidden");
+    expertState.style.display = "";
+    modelSelect.classList.remove("locked");
+    modelLabel.textContent = selectedModel;
+    promptInput.placeholder = getAgentPlaceholder();
+  },
+  { capture: true }
+);
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !summaryModal.classList.contains("is-hidden")) {

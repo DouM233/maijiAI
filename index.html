@@ -28,48 +28,42 @@
       <section class="workspace is-hidden" id="workspace">
         <aside class="sidebar" id="sidebar">
           <div class="sidebar-top">
-            <button
-              class="icon-button"
-              id="sidebarMenuToggle"
-              type="button"
-              aria-label="展开菜单"
-              aria-expanded="false"
-              aria-controls="sidebar"
-            >
-              <span aria-hidden="true">☰</span>
-            </button>
-            <button class="icon-button search" type="button" aria-label="搜索">
-              <span aria-hidden="true">⌕</span>
+            <div class="sidebar-brand">
+              <span class="brand-flare" aria-hidden="true">✦</span>
+              <strong>麦吉AI</strong>
+            </div>
+            <button class="icon-button search" type="button" aria-label="切换布局">
+              <span aria-hidden="true">◫</span>
             </button>
           </div>
 
           <nav class="nav-list" aria-label="主导航">
             <button class="nav-item active" id="newChatNav" type="button">
               <span aria-hidden="true">✎</span>
-              工具首页
+              发起新对话
             </button>
             <button class="nav-item" type="button">
-              <span aria-hidden="true">☆</span>
-              我的内容
+              <span aria-hidden="true">⌕</span>
+              搜索工具
             </button>
-            <button class="nav-item is-retired" id="adminNav" type="button">
-              <span aria-hidden="true">⚙</span>
-              后台管理
+            <button class="nav-item" type="button">
+              <span aria-hidden="true">◈</span>
+              公司知识库
             </button>
           </nav>
 
           <div class="sidebar-section">
             <div class="section-label">
-              <span>工具状态</span>
-              <span aria-hidden="true">›</span>
+              <span>已接入能力</span>
+              <span aria-hidden="true">•</span>
             </div>
-            <button class="muted-link" type="button">已接入工具会优先展示</button>
+            <button class="muted-link" type="button">买家秀、推广图、GIF 处理器已可直接使用</button>
           </div>
 
           <div class="sidebar-section history-area">
             <div class="section-label">
-              <span>对话</span>
-              <span aria-hidden="true">⋮</span>
+              <span>最近</span>
+              <span aria-hidden="true">·</span>
             </div>
             <div class="history-list" id="historyList">
               <button class="history-item" type="button">麦吉AI 产品原型讨论</button>
@@ -98,10 +92,9 @@
         <div class="content" id="contentArea">
           <header class="topbar">
             <div class="product-name">
-              <span class="spark" aria-hidden="true">✦</span>
-              <span>麦吉AI 工具中心</span>
+              <span>麦吉AI</span>
             </div>
-            <button class="account-button" type="button">工具入口</button>
+            <button class="account-button" type="button">⌁</button>
           </header>
 
           <section class="chat-view is-hidden" id="chatView" aria-label="对话内容">
@@ -118,44 +111,43 @@
           <section class="hero-area" id="heroArea">
             <div class="hero-head">
               <div class="greeting">
-                <p>你好</p>
-                <h1>今天要处理哪类素材？</h1>
+                <p>麦吉AI</p>
+                <h1>今天要先处理什么内容？</h1>
               </div>
-              <img class="ip-mascot" src="./assets/maiji-ip.png" alt="麦吉AI IP形象" />
             </div>
 
             <section class="composer" aria-label="AI 对话输入框">
-              <textarea id="promptInput" rows="2" placeholder="输入你的素材需求，或直接点击下方工具卡片..."></textarea>
+              <textarea id="promptInput" rows="2" placeholder="描述你的需求，或直接选择下方工具"></textarea>
               <div class="composer-tools">
-                <div class="tool-left">
-                  <button class="small-icon" type="button" aria-label="添加附件">＋</button>
-                  <button class="tool-button" type="button">
-                    <span aria-hidden="true">⌘</span>
-                    工具
-                  </button>
-                </div>
+                <div class="tool-left"></div>
                 <div class="tool-right">
-                  <div class="model-switcher" id="modelSwitcher">
-                    <button class="model-select" id="modelSelect" type="button" aria-haspopup="listbox" aria-expanded="false">
-                      <span id="modelLabel">GPT 快速</span>
-                      <span aria-hidden="true">⌄</span>
-                    </button>
-                    <div class="model-menu is-hidden" id="modelMenu" role="listbox" aria-label="选择模型模式">
-                      <button class="model-option selected" type="button" data-model="GPT 快速" data-desc="日常问答、轻量改写、快速生成">
-                        <strong>GPT 快速</strong>
-                        <span>响应更快，适合普通任务</span>
+                    <div class="model-switcher" id="modelSwitcher">
+                      <button class="model-select" id="modelSelect" type="button" aria-haspopup="listbox" aria-expanded="false">
+                        <span class="model-select-text">
+                          <span class="model-select-caption">模型</span>
+                          <span id="modelLabel">GPT5.4快速</span>
+                        </span>
+                        <span class="model-select-caret" aria-hidden="true">⌄</span>
                       </button>
-                      <button class="model-option" type="button" data-model="GPT 思考" data-desc="策略分析、复杂拆解、多步骤推理">
-                        <strong>GPT 思考</strong>
-                        <span>更擅长分析和规划</span>
-                      </button>
-                      <button class="model-option" type="button" data-model="GPT Pro" data-desc="高质量产出、重要方案、长文本任务">
-                        <strong>GPT Pro</strong>
-                        <span>质量优先，适合关键输出</span>
-                      </button>
+                      <div class="model-menu is-hidden" id="modelMenu" role="listbox" aria-label="选择模型模式">
+                        <button class="model-option is-disabled" type="button" data-model="gemini-3.1-flash-lite" data-label="Gemini3.1快速" data-desc="轻量低成本，当前 key 暂未开通此通道" disabled aria-disabled="true">
+                          <strong>Gemini3.1快速</strong>
+                          <span>gemini-3.1-flash-lite</span>
+                        </button>
+                        <button class="model-option selected" type="button" data-model="gpt-5.4-mini" data-label="GPT5.4快速" data-desc="稳定快速，适合控制成本的日常对话">
+                          <strong>GPT5.4快速</strong>
+                          <span>gpt-5.4-mini</span>
+                        </button>
+                        <button class="model-option" type="button" data-model="deepseek-v4-pro" data-label="DeepSeek深度思考" data-desc="适合复杂分析、方案拆解和更长链路的思考">
+                          <strong>DeepSeek深度思考</strong>
+                          <span>deepseek-v4-pro</span>
+                        </button>
+                        <button class="model-option" type="button" data-model="deepseek-v4-flash" data-label="DeepSeek快速" data-desc="响应更快，适合快速追问和高频交流">
+                          <strong>DeepSeek快速</strong>
+                          <span>deepseek-v4-flash</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <button class="small-icon" type="button" aria-label="语音输入">♪</button>
                   <button class="send-button" id="sendButton" type="button" aria-label="发送">▶</button>
                 </div>
               </div>
@@ -165,6 +157,13 @@
                 <button id="exitExpert" type="button">退出</button>
               </div>
             </section>
+
+            <div class="hero-shortcut">
+              <button class="knowledge-pill" type="button">
+                <span aria-hidden="true">◌</span>
+                公司知识库
+              </button>
+            </div>
           </section>
 
           <section class="creator-view is-hidden" id="creatorView" aria-label="创建专家">
@@ -539,96 +538,33 @@
           <section class="tool-sections" id="toolSections">
             <section class="tool-group">
               <div class="group-title">
-                <span aria-hidden="true">▤</span>
-                <h2>管理工具</h2>
-                <small>4</small>
+                <h2>已上线工具</h2>
+                <small>3</small>
               </div>
+              <p class="group-copy">先把真正可用的能力放在最前面，点开就能直接进入。</p>
               <div class="card-grid">
                 <button class="agent-card placeholder-card" type="button" data-tool-id="ai-assistant">
-                  <span class="card-icon plus" aria-hidden="true">＋</span>
                   <span>
                     <strong>麦吉AI买家秀生成器</strong>
                     <small>快速生成电商买家秀图文素材</small>
                   </span>
                 </button>
                 <button class="agent-card placeholder-card" type="button" data-tool-id="resume-analyzer">
-                  <span class="card-icon chart" aria-hidden="true">▥</span>
                   <span>
                     <strong>麦吉AI推广图生成器</strong>
                     <small>面向投放与上新场景生成推广视觉</small>
                   </span>
                 </button>
                 <button class="agent-card placeholder-card" type="button" data-tool-id="business-card-diagnosis">
-                  <span class="card-icon search" aria-hidden="true">⌕</span>
                   <span>
                     <strong>麦吉AI GIF处理器</strong>
                     <small>处理动态素材、GIF 与轻量动效文件</small>
                   </span>
                 </button>
-                <button class="agent-card" data-agent="个人访谈官" data-tool-id="personal-interviewer" type="button">
-                  <span class="card-icon interview" aria-hidden="true">◉</span>
+                <button class="agent-card placeholder-card" type="button" data-tool-id="coming-soon-tool">
                   <span>
-                    <strong>个人访谈官</strong>
-                    <small>沉淀访谈线索，整理人物故事与关键观点</small>
-                  </span>
-                </button>
-                <button class="agent-card" data-agent="电商管理落地顾问" data-tool-id="ecommerce-management-consultant" type="button">
-                  <span class="card-icon advisor" aria-hidden="true">▦</span>
-                  <span>
-                    <strong>电商管理落地顾问</strong>
-                    <small>用组织、绩效、流程和运营动作提升电商利润率</small>
-                  </span>
-                </button>
-              </div>
-            </section>
-
-            <section class="tool-group">
-              <div class="group-title">
-                <span aria-hidden="true">🛒</span>
-                <h2>电商工具</h2>
-                <small>6</small>
-              </div>
-              <div class="card-grid">
-                <button class="agent-card" data-agent="爆款裂变分析AI教练" data-tool-id="viral-growth-coach" type="button">
-                  <span class="card-icon target" aria-hidden="true">◎</span>
-                  <span>
-                    <strong>爆款裂变分析AI教练</strong>
-                    <small>拆解爆款传播逻辑，提炼可复用增长动作</small>
-                  </span>
-                </button>
-                <button class="agent-card" data-agent="天猫竞争策略教练" data-tool-id="tmall-competition-coach" type="button">
-                  <span class="card-icon document" aria-hidden="true">□</span>
-                  <span>
-                    <strong>天猫竞争策略教练</strong>
-                    <small>分析竞品打法，形成店铺竞争策略建议</small>
-                  </span>
-                </button>
-                <button class="agent-card" data-agent="小红书千帆投放专家" data-tool-id="redbook-qianfan-ads" type="button">
-                  <span class="card-icon rocket" aria-hidden="true">↗</span>
-                  <span>
-                    <strong>小红书千帆投放专家</strong>
-                    <small>规划种草投放节奏，优化达人与素材组合</small>
-                  </span>
-                </button>
-                <button class="agent-card placeholder-card" type="button" data-tool-id="short-video-script">
-                  <span class="card-icon script" aria-hidden="true">▱</span>
-                  <span>
-                    <strong>短视频脚本生成</strong>
-                    <small>生成高转化的短视频口播脚本</small>
-                  </span>
-                </button>
-                <button class="agent-card placeholder-card" type="button" data-tool-id="tmall-image-planner">
-                  <span class="card-icon light" aria-hidden="true">○</span>
-                  <span>
-                    <strong>天猫主图策划教练</strong>
-                    <small>围绕卖点帮你完成主图策划</small>
-                  </span>
-                </button>
-                <button class="agent-card placeholder-card" type="button" data-tool-id="tmall-review-coach">
-                  <span class="card-icon review" aria-hidden="true">▣</span>
-                  <span>
-                    <strong>天猫评价教练</strong>
-                    <small>辅助产出高转化评价内容</small>
+                    <strong>更多工具即将上线</strong>
+                    <small>继续接入新的电商创作与处理能力</small>
                   </span>
                 </button>
               </div>

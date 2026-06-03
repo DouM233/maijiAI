@@ -64,6 +64,33 @@ async function initDatabase() {
     `);
     console.log('access_logs 表就绪');
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS conversations (
+        id VARCHAR(36) PRIMARY KEY,
+        user_id VARCHAR(36) NOT NULL,
+        title VARCHAR(200) DEFAULT '',
+        agent_id VARCHAR(100) DEFAULT '',
+        model VARCHAR(50) DEFAULT '',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_user_id (user_id),
+        INDEX idx_updated_at (updated_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('conversations 表就绪');
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        conversation_id VARCHAR(36) NOT NULL,
+        role ENUM('system', 'user', 'assistant') NOT NULL,
+        content MEDIUMTEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_conversation_id (conversation_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('messages 表就绪');
+
     const [userCount] = await connection.query('SELECT COUNT(*) as count FROM users');
     const [toolCount] = await connection.query('SELECT COUNT(*) as count FROM tools');
     console.log('用户数:', userCount[0].count, '工具数:', toolCount[0].count);

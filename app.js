@@ -68,6 +68,79 @@ let currentConversationId = "";
 let currentConversationMessages = [];
 let uploadedAttachments = [];
 
+/* ── 对话持久化工具函数 ── */
+function getAuthToken() {
+  return localStorage.getItem("maijiai_token") || "";
+}
+
+function authHeaders() {
+  return { "Content-Type": "application/json", Authorization: "Bearer " + getAuthToken() };
+}
+
+async function saveConversation(userMsg, assistantMsg) {
+  if (!getAuthToken() || !currentConversationId) return;
+  var title = (userMsg || "").slice(0, 50);
+  try {
+    await fetch("/api/conversations", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({
+        conversationId: currentConversationId,
+        title: title,
+        agentId: activeExpert || "",
+        model: getResolvedApiModel(),
+        messages: [
+          { role: "user", content: userMsg },
+          { role: "assistant", content: assistantMsg }
+        ]
+      })
+    });
+  } catch (e) { console.warn("保存对话失败:", e); }
+}
+
+async function loadConversationList() {
+  if (!getAuthToken()) return;
+  try {
+    var res = await fetch("/api/conversations", { headers: authHeaders() });
+    if (!res.ok) return;
+    var data = await res.json();
+    historyList.innerHTML = "";
+    (data.conversations || []).forEach(function(conv) {
+      var btn = document.createElement("button");
+      btn.className = "history-item";
+      btn.type = "button";
+      btn.textContent = conv.title.length > 14 ? conv.title.slice(0, 14) + "..." : (conv.title || "对话");
+      btn.dataset.convId = conv.id;
+      btn.dataset.agentId = conv.agent_id || "";
+      btn.addEventListener("click", function() { restoreConversation(conv.id, conv.agent_id); });
+      historyList.append(btn);
+    });
+  } catch (e) { console.warn("加载对话列表失败:", e); }
+}
+
+async function restoreConversation(convId, agentId) {
+  if (!getAuthToken()) return;
+  try {
+    var res = await fetch("/api/conversations/messages?id=" + encodeURIComponent(convId), { headers: authHeaders() });
+    if (!res.ok) return;
+    var data = await res.json();
+    currentConversationId = convId;
+    currentConversationMessages = (data.messages || []).map(function(m) { return { role: m.role, content: m.content }; });
+    if (agentId) {
+      activeExpert = agentId;
+    }
+    messageList.innerHTML = "";
+    contentArea.classList.add("chat-mode");
+    chatView.classList.remove("is-hidden");
+    chatTitle.textContent = agentId || "对话";
+    currentConversationMessages.forEach(function(m) {
+      if (m.role === "user" || m.role === "assistant") {
+        addMessage(m.role === "user" ? "user" : "ai", m.content);
+      }
+    });
+  } catch (e) { console.warn("恢复对话失败:", e); }
+}
+
 const fileInput = document.createElement("input");
 fileInput.type = "file";
 fileInput.multiple = true;
@@ -810,7 +883,7 @@ function updateExpertPreview() {
 // 钉钉扫码登录 - 新版 OAuth 2.0
 dingLogin.addEventListener("click", () => {
   var CLIENT_ID = "dingbnoeknp9jtjdautf";
-  var REDIRECT_URI = "http://121.43.251.177/api/auth/dingtalk/callback";
+  var REDIRECT_URI = "http://121.43.251.177/api/auth/dingtalk";
   var authUrl = "https://login.dingtalk.com/oauth2/auth?" +
     "client_id=" + CLIENT_ID + "&" +
     "redirect_uri=" + encodeURIComponent(REDIRECT_URI) + "&" +
@@ -833,6 +906,9 @@ dingLogin.addEventListener("click", () => {
         workspace.classList.remove("is-hidden");
         setActiveNav(newChatNav);
         syncSidebarMenuState(false);
+        var nameEl = document.querySelector("#userDisplayName");
+        if (nameEl) nameEl.textContent = user.name;
+        loadConversationList();
       }
     } catch(e) {}
   }
@@ -852,12 +928,6 @@ sendButton.addEventListener("click", async () => {
   openConversation(text || "附件分析");
   addMessage("user", text || "请结合我上传的附件继续分析。", { markdown: false });
   addThinkingMessage();
-
-  const item = document.createElement("button");
-  item.className = "history-item";
-  item.type = "button";
-  item.textContent = (text || "附件分析").length > 14 ? `${(text || "附件分析").slice(0, 14)}...` : (text || "附件分析");
-  historyList.prepend(item);
 
   promptInput.value = "";
   clearAttachments();
@@ -969,6 +1039,8 @@ async function replaceThinkingMessage(text) {
         content.textContent = finalReply;
         messageList.scrollTop = messageList.scrollHeight;
         finishGenerating();
+        saveConversation(text, finalReply);
+        loadConversationList();
       },
       /* onError */
       (error) => {
@@ -1063,29 +1135,6 @@ function bindAgentCard(card) {
   });
 }
 
-function setupResumeAnalysisCard() {
-  const countBadge = document.querySelector(".group-title small");
-  if (countBadge) {
-    countBadge.textContent = "4";
-  }
-
-  const placeholderCard = document.querySelector('[data-tool-id="coming-soon-tool"]');
-  if (!placeholderCard) return;
-
-  placeholderCard.classList.remove("placeholder-card");
-  placeholderCard.classList.add("agent-entry");
-  placeholderCard.removeAttribute("data-tool-id");
-  placeholderCard.dataset.agent = "resume-analysis";
-
-  const title = placeholderCard.querySelector("strong");
-  const description = placeholderCard.querySelector("small");
-  if (title) title.textContent = "简历分析";
-  if (description) {
-    description.textContent = "按电商业务结果、冰山八维与用人风险输出结构化结论";
-  }
-}
-
-setupResumeAnalysisCard();
 document.querySelectorAll(".agent-card").forEach(bindAgentCard);
 
 toolLeft?.addEventListener("click", () => {

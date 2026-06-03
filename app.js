@@ -217,33 +217,71 @@ function buildAgentSystemPrompt() {
     .join("\n");
 }
 
-async function requestChatReply(message) {
+async function requestChatStreamReply(message, onDelta, onDone, onError) {
   const history = currentConversationMessages.slice(0, -1);
   const response = await fetch("/api/chat", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       message,
       model: getResolvedApiModel(),
       agentId: activeExpert || "",
       conversationId: getCurrentConversationId(),
       history,
-      systemPrompt: buildAgentSystemPrompt()
+      systemPrompt: buildAgentSystemPrompt(),
+      stream: true
     })
   });
 
-  const data = await response.json();
   if (!response.ok) {
-    throw new Error(data?.details || data?.error || "Chat request failed.");
+    let errorMsg = "Chat request failed.";
+    try {
+      const errData = await response.json();
+      errorMsg = errData?.details || errData?.error || errorMsg;
+    } catch {}
+    throw new Error(errorMsg);
   }
 
-  if (data?.conversationId) {
-    currentConversationId = data.conversationId;
-  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let fullReply = "";
 
-  return data;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || !trimmed.startsWith("data:")) continue;
+      const payload = trimmed.slice(5).trim();
+      if (payload === "[DONE]") {
+        onDone(fullReply);
+        return;
+      }
+      try {
+        const data = JSON.parse(payload);
+        if (data.type === "meta" && data.conversationId) {
+          currentConversationId = data.conversationId;
+        } else if (data.type === "delta" && data.content) {
+          fullReply += data.content;
+          onDelta(data.content, fullReply);
+        } else if (data.type === "error") {
+          throw new Error(data.error || "Stream error");
+        }
+      } catch (e) {
+        if (e.message && e.message !== "Stream error" && !e.message.startsWith("Unexpected")) {
+          throw e;
+        }
+      }
+    }
+  }
+  /* 如果上游没发 [DONE] 但流结束了，也触发完成 */
+  onDone(fullReply);
 }
 
 function syncSidebarMenuState(isOpen) {
@@ -769,13 +807,35 @@ function updateExpertPreview() {
   previewNodes.answer.textContent = `我是「${expert.name}」。我会用「${expert.profile.tone || "清晰务实"}」的方式工作。请先给我一个具体问题，我会按工作流第一步开始：${expert.workflow[0] || "诊断当前问题"}。`;
 }
 
+// 真正的钉钉扫码登录 - 跳转到钉钉授权页面
 dingLogin.addEventListener("click", () => {
-  loginView.classList.add("is-hidden");
-  workspace.classList.remove("is-hidden");
-  setActiveNav(newChatNav);
-  syncSidebarMenuState(false);
-  promptInput.focus();
+  var DINGTALK_APP_KEY = "dingbnoeknp9jtjdautf";
+  var REDIRECT_URI = "http://121.43.251.177/api/auth/dingtalk/callback";
+  var authUrl = "https://oapi.dingtalk.com/connect/oauth2/authorize?" +
+    "appid=" + DINGTALK_APP_KEY + "&" +
+    "redirect_uri=" + encodeURIComponent(REDIRECT_URI) + "&" +
+    "response_type=code&" +
+    "scope=openid&" +
+    "state=" + Date.now();
+  window.location.href = authUrl;
 });
+
+// 检查登录状态 - 如果有 token 直接显示工作空间
+(function checkAuthOnLoad() {
+  var token = localStorage.getItem("maijiai_token");
+  var userStr = localStorage.getItem("maijiai_user");
+  if (token && userStr) {
+    try {
+      var user = JSON.parse(userStr);
+      if (user && user.name) {
+        loginView.classList.add("is-hidden");
+        workspace.classList.remove("is-hidden");
+        setActiveNav(newChatNav);
+        syncSidebarMenuState(false);
+      }
+    } catch(e) {}
+  }
+})();
 
 promptInput.addEventListener("input", () => {
   updateSendReadyState();
@@ -864,24 +924,9 @@ async function replaceThinkingMessage(text) {
   const thinking = messageList.querySelector(".thinking");
   if (thinking) thinking.remove();
 
-  try {
-    const data = await requestChatReply(text);
-    const reply = typeof data?.reply === "string" ? data.reply : buildExpertReply(text);
-    currentConversationMessages.push({ role: "assistant", content: reply });
-    addStreamingMessage("ai", reply);
-  } catch (error) {
-    const fallbackReply =
-      error instanceof Error
-        ? `聊天接口暂时不可用：${error.message}`
-        : "聊天接口暂时不可用，请稍后再试。";
-    currentConversationMessages.push({ role: "assistant", content: fallbackReply });
-    addStreamingMessage("ai", fallbackReply);
-  }
-}
-
-function addStreamingMessage(role, text) {
+  /* 创建 AI 消息气泡，流式写入内容 */
   const message = document.createElement("article");
-  message.className = `message ${role}`;
+  message.className = "message ai";
 
   const avatar = document.createElement("span");
   avatar.className = "message-avatar";
@@ -892,27 +937,55 @@ function addStreamingMessage(role, text) {
 
   const meta = document.createElement("div");
   meta.className = "message-meta";
-  meta.textContent = activeExpert || selectedModel;
+  meta.textContent = getAssistantLabel();
 
   const content = document.createElement("div");
+  content.className = "message-content streaming";
   bubble.append(meta, content);
   message.append(avatar, bubble);
   messageList.append(message);
 
-  let index = 0;
-  const timer = window.setInterval(() => {
-    content.textContent = text.slice(0, index + 1);
-    index += 1;
-    messageList.scrollTop = messageList.scrollHeight;
+  function finishGenerating() {
+    isGenerating = false;
+    content.classList.remove("streaming");
+    sendButton.textContent = "▶";
+    sendButton.setAttribute("aria-label", "发送");
+    sendButton.classList.toggle("ready", promptInput.value.trim().length > 0);
+  }
 
-    if (index >= text.length) {
-      window.clearInterval(timer);
-      isGenerating = false;
-      sendButton.textContent = "▶";
-      sendButton.setAttribute("aria-label", "发送");
-      sendButton.classList.toggle("ready", promptInput.value.trim().length > 0);
-    }
-  }, 18);
+  try {
+    await requestChatStreamReply(
+      text,
+      /* onDelta */
+      (delta, fullText) => {
+        content.textContent = fullText;
+        messageList.scrollTop = messageList.scrollHeight;
+      },
+      /* onDone */
+      (fullReply) => {
+        const finalReply = fullReply || buildExpertReply(text);
+        currentConversationMessages.push({ role: "assistant", content: finalReply });
+        content.textContent = finalReply;
+        messageList.scrollTop = messageList.scrollHeight;
+        finishGenerating();
+      },
+      /* onError */
+      (error) => {
+        const errorMsg = `聊天接口暂时不可用：${error}`;
+        currentConversationMessages.push({ role: "assistant", content: errorMsg });
+        content.textContent = errorMsg;
+        finishGenerating();
+      }
+    );
+  } catch (error) {
+    const fallbackReply =
+      error instanceof Error
+        ? `聊天接口暂时不可用：${error.message}`
+        : "聊天接口暂时不可用，请稍后再试。";
+    currentConversationMessages.push({ role: "assistant", content: fallbackReply });
+    content.textContent = fallbackReply;
+    finishGenerating();
+  }
 }
 
 function closeModelMenu() {

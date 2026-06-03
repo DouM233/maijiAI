@@ -807,15 +807,16 @@ function updateExpertPreview() {
   previewNodes.answer.textContent = `我是「${expert.name}」。我会用「${expert.profile.tone || "清晰务实"}」的方式工作。请先给我一个具体问题，我会按工作流第一步开始：${expert.workflow[0] || "诊断当前问题"}。`;
 }
 
-// 真正的钉钉扫码登录 - 跳转到钉钉授权页面
+// 钉钉扫码登录 - 新版 OAuth 2.0
 dingLogin.addEventListener("click", () => {
-  var DINGTALK_APP_KEY = "dingbnoeknp9jtjdautf";
+  var CLIENT_ID = "dingbnoeknp9jtjdautf";
   var REDIRECT_URI = "http://121.43.251.177/api/auth/dingtalk/callback";
-  var authUrl = "https://oapi.dingtalk.com/connect/oauth2/authorize?" +
-    "appid=" + DINGTALK_APP_KEY + "&" +
+  var authUrl = "https://login.dingtalk.com/oauth2/auth?" +
+    "client_id=" + CLIENT_ID + "&" +
     "redirect_uri=" + encodeURIComponent(REDIRECT_URI) + "&" +
     "response_type=code&" +
     "scope=openid&" +
+    "prompt=consent&" +
     "state=" + Date.now();
   window.location.href = authUrl;
 });

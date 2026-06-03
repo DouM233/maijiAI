@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-export default function AuthSuccess() {
+function AuthSuccessInner() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -39,5 +39,13 @@ export default function AuthSuccess() {
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
     </div>
+  );
+}
+
+export default function AuthSuccess() {
+  return (
+    <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>加载中...</div>}>
+      <AuthSuccessInner />
+    </Suspense>
   );
 }

@@ -63,7 +63,8 @@
 
           <div class="sidebar-footer">
             <button class="user-chip" type="button">
-              <span class="avatar" aria-hidden="true">麦</span>
+              <img class="avatar user-avatar" id="userAvatar" src="" alt="" style="display:none; width:32px; height:32px; border-radius:50%; object-fit:cover;" />
+              <span class="avatar user-avatar-fallback" id="userAvatarFallback" aria-hidden="true">麦</span>
               <span id="userDisplayName">麦吉体验用户</span>
             </button>
           </div>
@@ -510,33 +511,135 @@
           </section>
 
           <section class="tool-sections" id="toolSections">
+
+            <!-- 工作工具 -->
             <section class="tool-group">
               <div class="group-title">
-                <h2>已上线工具</h2>
-                <small>3</small>
+                <span class="group-emoji">🧰</span>
+                <h2>工作工具</h2>
+                <span class="group-count">3</span>
               </div>
-              <p class="group-copy">先把真正可用的能力放在最前面，点开就能直接进入。</p>
               <div class="card-grid">
-                <button class="agent-card placeholder-card" type="button" data-tool-id="ai-assistant">
+                <button class="agent-card" type="button" data-tool-id="ai-assistant">
+                  <span class="card-icon buyer-show" aria-hidden="true">🖼</span>
                   <span>
-                    <strong>麦吉AI买家秀生成器</strong>
-                    <small>快速生成电商买家秀图文素材</small>
+                    <strong>买家秀生成器</strong>
+                    <small>快速拆解买家秀图文需求，生成可执行素材方向</small>
                   </span>
                 </button>
-                <button class="agent-card placeholder-card" type="button" data-tool-id="resume-analyzer">
+                <button class="agent-card" type="button" data-tool-id="resume-analyzer">
+                  <span class="card-icon promo-img" aria-hidden="true">📐</span>
                   <span>
-                    <strong>麦吉AI推广图生成器</strong>
-                    <small>面向投放与上新场景生成推广视觉</small>
+                    <strong>推广图生成器</strong>
+                    <small>面向投放与上新场景生成推广视觉方案</small>
                   </span>
                 </button>
-                <button class="agent-card placeholder-card" type="button" data-tool-id="business-card-diagnosis">
+                <button class="agent-card" type="button" data-tool-id="business-card-diagnosis">
+                  <span class="card-icon gif-tool" aria-hidden="true">🎞</span>
                   <span>
-                    <strong>麦吉AI GIF处理器</strong>
-                    <small>处理动态素材、GIF 与轻量动效文件</small>
+                    <strong>GIF 处理器</strong>
+                    <small>处理动态素材与轻量动效文件的优化需求</small>
                   </span>
                 </button>
               </div>
             </section>
+
+            <!-- 电商工具 -->
+            <section class="tool-group">
+              <div class="group-title">
+                <span class="group-emoji">🛒</span>
+                <h2>电商工具</h2>
+                <span class="group-count">5</span>
+              </div>
+              <div class="card-grid">
+                <button class="agent-card placeholder-card" type="button" data-tool-id="viral-growth-coach">
+                  <span class="card-icon viral" aria-hidden="true">📊</span>
+                  <span>
+                    <strong>爆款裂变分析AI教练</strong>
+                    <small>实现爆款有逻辑的人群情感裂变</small>
+                  </span>
+                </button>
+                <button class="agent-card placeholder-card" type="button" data-tool-id="tmall-competition-coach">
+                  <span class="card-icon compete" aria-hidden="true">🎯</span>
+                  <span>
+                    <strong>天猫竞争策略教练</strong>
+                    <small>分析并打赢对手的竞争策略</small>
+                  </span>
+                </button>
+                <button class="agent-card placeholder-card" type="button" data-tool-id="tmall-image-planner">
+                  <span class="card-icon image-plan" aria-hidden="true">🖼</span>
+                  <span>
+                    <strong>天猫主图策划教练</strong>
+                    <small>围绕卖点和成交逻辑策划主图方案</small>
+                  </span>
+                </button>
+                <button class="agent-card placeholder-card" type="button" data-tool-id="tmall-review-coach">
+                  <span class="card-icon review-star" aria-hidden="true">⭐</span>
+                  <span>
+                    <strong>天猫评价教练</strong>
+                    <small>帮助你出高转化率的天猫评价内容</small>
+                  </span>
+                </button>
+                <button class="agent-card placeholder-card" type="button" data-tool-id="short-video-script">
+                  <span class="card-icon video-script" aria-hidden="true">🎬</span>
+                  <span>
+                    <strong>短视频脚本生成</strong>
+                    <small>生成高转化的短视频投流脚本</small>
+                  </span>
+                </button>
+              </div>
+            </section>
+
+            <!-- 管理工具 -->
+            <section class="tool-group">
+              <div class="group-title">
+                <span class="group-emoji">📋</span>
+                <h2>管理工具</h2>
+                <span class="group-count">3</span>
+              </div>
+              <div class="card-grid">
+                <button class="agent-card" type="button" data-tool-id="resume-analysis">
+                  <span class="card-icon resume" aria-hidden="true">📄</span>
+                  <span>
+                    <strong>简历分析</strong>
+                    <small>从业务结果与冰山八维深度分析候选人</small>
+                  </span>
+                </button>
+                <button class="agent-card placeholder-card" type="button" data-tool-id="personal-interviewer">
+                  <span class="card-icon interviewer" aria-hidden="true">🎤</span>
+                  <span>
+                    <strong>个人访谈官</strong>
+                    <small>深度访谈提炼候选人的关键信息</small>
+                  </span>
+                </button>
+                <button class="agent-card placeholder-card" type="button" data-tool-id="ecommerce-management-consultant">
+                  <span class="card-icon consultant" aria-hidden="true">💼</span>
+                  <span>
+                    <strong>电商管理落地顾问</strong>
+                    <small>用组织、绩效、流程提升电商利润率</small>
+                  </span>
+                </button>
+              </div>
+            </section>
+
+            <!-- 小红书 -->
+            <section class="tool-group">
+              <div class="group-title">
+                <span class="group-emoji">📕</span>
+                <h2>小红书</h2>
+                <span class="group-count">1</span>
+              </div>
+              <div class="card-grid">
+                <button class="agent-card placeholder-card" type="button" data-tool-id="redbook-qianfan-ads">
+                  <span class="card-icon redbook" aria-hidden="true">📣</span>
+                  <span>
+                    <strong>小红书千帆投放专家</strong>
+                    <small>快速迭代投放策略，筛出投放爆题</small>
+                  </span>
+                </button>
+              </div>
+            </section>
+
           </section>
         </div>
       </section>
@@ -566,3 +669,4 @@
     <script src="./app.js"></script>
   </body>
 </html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      

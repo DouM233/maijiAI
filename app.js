@@ -908,6 +908,15 @@ dingLogin.addEventListener("click", () => {
         syncSidebarMenuState(false);
         var nameEl = document.querySelector("#userDisplayName");
         if (nameEl) nameEl.textContent = user.name;
+        var avatarImg = document.querySelector("#userAvatar");
+        var avatarFallback = document.querySelector("#userAvatarFallback");
+        if (user.avatar && avatarImg) {
+          avatarImg.src = user.avatar;
+          avatarImg.style.display = "";
+          if (avatarFallback) avatarFallback.style.display = "none";
+        } else if (avatarFallback && user.name) {
+          avatarFallback.textContent = user.name.slice(0, 1);
+        }
         loadConversationList();
       }
     } catch(e) {}
@@ -1633,138 +1642,4 @@ function addStreamingMessage(role, text) {
 
     if (index >= text.length) {
       window.clearInterval(timer);
-      renderMessageContent(content, text, true);
-      isGenerating = false;
-      sendButton.textContent = "▶";
-      sendButton.setAttribute("aria-label", "发送");
-      sendButton.classList.toggle("ready", promptInput.value.trim().length > 0);
-    }
-  }, 14);
-}
-
-function bindAgentCard(card) {
-  const toolId = card.dataset.toolId;
-  const tool = toolId ? toolLinks[toolId] : null;
-  const agentId = card.dataset.agent;
-  const agent = agentId ? getAgentConfig(agentId) : null;
-
-  if (agent?.directEntry) {
-    card.addEventListener(
-      "click",
-      (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        activateAgent(agentId, { showWelcome: true });
-      },
-      { capture: true }
-    );
-    card.setAttribute("title", `进入${agent.name}`);
-    return;
-  }
-
-  if (tool?.url) {
-    card.addEventListener("click", () => {
-      window.open(tool.url, "_blank", "noopener,noreferrer");
-    });
-    card.setAttribute("title", `打开${tool.name || "工具"}`);
-    return;
-  }
-
-  if (tool) {
-    card.classList.add("is-pending");
-    card.setAttribute("title", `${tool.name || "工具"}正在接入`);
-    const textWrap = card.querySelector("span:last-child");
-    if (textWrap && !textWrap.querySelector(".tool-status")) {
-      const status = document.createElement("em");
-      status.className = "tool-status";
-      status.textContent = tool.status || "待接入";
-      textWrap.append(status);
-    }
-    return;
-  }
-
-  card.addEventListener("click", () => {
-    pendingExpert = card.dataset.agent;
-    summaryText.value = buildExpertSummary(pendingExpert);
-    summaryModal.classList.remove("is-hidden");
-    summaryText.focus();
-  });
-}
-
-function resetConversation() {
-  setActiveNav(newChatNav);
-  closeSidebarMenu();
-  currentConversationId = "";
-  currentConversationMessages = [];
-  activeExpert = "";
-  activeExpertName.textContent = "";
-  messageList.innerHTML = "";
-  contentArea.classList.remove("chat-mode");
-  contentArea.classList.remove("creator-mode");
-  contentArea.classList.remove("knowledge-mode");
-  contentArea.classList.remove("admin-mode");
-  creatorView.classList.add("is-hidden");
-  knowledgeView.classList.add("is-hidden");
-  adminView.classList.add("is-hidden");
-  chatView.classList.add("is-hidden");
-  expertState.classList.add("is-hidden");
-  expertState.style.display = "";
-  modelSelect.classList.remove("locked");
-  modelLabel.textContent = selectedModel;
-  chatTitle.textContent = "新的麦吉AI对话";
-  promptInput.placeholder = getAgentPlaceholder();
-  promptInput.focus();
-}
-
-confirmSummary.addEventListener(
-  "click",
-  (event) => {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    activateAgent(pendingExpert, { showWelcome: false });
-  },
-  { capture: true }
-);
-
-exitExpert.addEventListener(
-  "click",
-  (event) => {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    activeExpert = "";
-    activeExpertName.textContent = "";
-    expertState.classList.add("is-hidden");
-    expertState.style.display = "";
-    modelSelect.classList.remove("locked");
-    modelLabel.textContent = selectedModel;
-    promptInput.placeholder = getAgentPlaceholder();
-  },
-  { capture: true }
-);
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !summaryModal.classList.contains("is-hidden")) {
-    closeSummaryModal();
-  }
-
-  if (event.key === "Escape" && !modelMenu.classList.contains("is-hidden")) {
-    closeModelMenu();
-  }
-
-  if (event.key === "Escape" && workspace.classList.contains("sidebar-open")) {
-    closeSidebarMenu();
-  }
-});
-
-document.addEventListener("click", (event) => {
-  if (!isCompactLayout()) return;
-  if (!workspace.classList.contains("sidebar-open")) return;
-  if (sidebar.contains(event.target)) return;
-  closeSidebarMenu();
-});
-
-window.addEventListener("resize", () => {
-  if (!isCompactLayout()) {
-    syncSidebarMenuState(false);
-  }
-});
+      renderMessageConte

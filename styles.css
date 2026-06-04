@@ -594,10 +594,11 @@ button {
 }
 
 .send-button.ready {
-  background: var(--blue);
+  background: #f97316;
 }
 
 .send-button.ready:hover {
+  background: #ea6c0a;
   transform: translateY(-1px);
 }
 
@@ -2344,7 +2345,17 @@ button {
   height: 3rem;
   border-radius: 999px;
   color: #111;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.send-button.ready {
+  color: #fff;
+  background: #f97316;
+}
+
+.send-button.ready:hover {
+  background: #ea6c0a;
+  transform: translateY(-1px);
 }
 
 .knowledge-pill {
@@ -3498,4 +3509,186 @@ button {
 .markdown-body a {
   color: #2468d6;
   text-decoration: underline;
+}
+
+/* ══════════════════════════════════
+   日间/夜间模式切换按钮
+══════════════════════════════════ */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  margin-bottom: 0.3rem;
+  border: 0;
+  border-radius: 0.5rem;
+  color: rgba(255, 255, 255, 0.55);
+  background: transparent;
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 140ms, color 140ms;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.theme-icon-sun { display: none; }
+.theme-icon-moon { display: inline; font-size: 0.9rem; }
+
+/* ══════════════════════════════════
+   日间模式（body.light-mode）
+══════════════════════════════════ */
+body.light-mode .theme-toggle {
+  color: #5a6070;
+}
+body.light-mode .theme-toggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #1a1f2e;
+}
+body.light-mode .theme-icon-sun { display: inline; }
+body.light-mode .theme-icon-moon { display: none; }
+
+/* 整体背景 */
+body.light-mode .workspace {
+  background: #f0f2f5;
+}
+
+/* 侧栏 */
+body.light-mode .sidebar {
+  background: #ffffff;
+  border-right: 1px solid #e5e8ed;
+}
+body.light-mode .sidebar-top,
+body.light-mode .sidebar-footer {
+  border-color: #e5e8ed;
+}
+body.light-mode .nav-button,
+body.light-mode .new-chat-button {
+  color: #3a3f50;
+}
+body.light-mode .new-chat-button {
+  background: #f0f2f5;
+  border-color: #dde1e9;
+}
+body.light-mode .new-chat-button:hover,
+body.light-mode .nav-button:hover {
+  background: #e8ebf0;
+}
+body.light-mode .new-chat-button.active {
+  background: #1a1f2e;
+  color: #fff;
+  border-color: transparent;
+}
+body.light-mode .section-label,
+body.light-mode .history-item {
+  color: #5a6070;
+}
+body.light-mode .history-item:hover {
+  background: #f0f2f5;
+  color: #1a1f2e;
+}
+body.light-mode .user-chip {
+  color: #3a3f50;
+}
+
+/* 顶栏 */
+body.light-mode .topbar {
+  background: #f0f2f5;
+  border-bottom: 1px solid #e5e8ed;
+}
+body.light-mode .topbar .product-name,
+body.light-mode .topbar .spark,
+body.light-mode .chat-title {
+  color: #1a1f2e;
+}
+body.light-mode .account-button {
+  background: #e0e3ea;
+  color: #1a1f2e;
+}
+
+/* 内용 영역 */
+body.light-mode .content {
+  background: #f0f2f5;
+}
+body.light-mode .chat-view {
+  background: #f0f2f5;
+}
+
+/* 메시지 */
+body.light-mode .message-bubble {
+  background: #ffffff;
+  border: 1px solid #e5e8ed;
+  color: #1a1f2e;
+}
+body.light-mode .message.user .message-bubble {
+  background: #1a1f2e;
+  border-color: transparent;
+  color: #fff;
+}
+body.light-mode .message-avatar {
+  background: #e0e3ea;
+  color: #3a3f50;
+}
+body.light-mode .message.user .message-avatar {
+  background: #1a1f2e;
+  color: #fff;
+}
+body.light-mode .message-meta {
+  color: #7a8299;
+}
+body.light-mode .message-content {
+  color: #1a1f2e;
+}
+
+/* 입력창 */
+body.light-mode .composer {
+  background: #ffffff;
+  border-color: #dde1e9;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+body.light-mode .composer textarea {
+  color: #1a1f2e;
+}
+body.light-mode .composer textarea::placeholder {
+  color: #a0a8bb;
+}
+body.light-mode .model-select {
+  color: #5a6070;
+  background: #f0f2f5;
+  border-color: #dde1e9;
+}
+body.light-mode .small-icon {
+  color: #5a6070;
+}
+body.light-mode .send-button {
+  background: rgba(0,0,0,0.1);
+  color: #3a3f50;
+}
+body.light-mode .send-button.ready {
+  background: #f97316;
+  color: #fff;
+}
+
+/* 전문가 상태 바 */
+body.light-mode .expert-state {
+  background: #ffffff;
+  border-color: #dde1e9;
+  color: #1a1f2e;
+}
+
+/* 툴 섹션 홈 */
+body.light-mode .greeting h1 {
+  color: #1a1f2e;
+}
+body.light-mode .greeting p,
+body.light-mode .hero-subtitle {
+  color: #5a6070;
+}
+body.light-mode .composer-tools .model-select,
+body.light-mode .composer-tools .small-icon {
+  color: #5a6070;
 }

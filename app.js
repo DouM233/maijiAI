@@ -899,12 +899,7 @@ async function replaceThinkingMessage(text) {
       (fullReply) => {
         const finalReply = fullReply || buildExpertReply(text);
         currentConversationMessages.push({ role: "assistant", content: finalReply });
-        if (window.marked) {
-          content.innerHTML = window.marked.parse(finalReply);
-        } else {
-          content.textContent = finalReply;
-        }
-        content.classList.add("markdown-body");
+        renderMessageContent(content, finalReply, true);
         messageList.scrollTop = messageList.scrollHeight;
         finishGenerating();
         saveConversation(text, finalReply);
@@ -1327,6 +1322,30 @@ exitExpert.addEventListener("click", () => {
 // resetConversation 定义在 line ~765，此处仅绑定事件
 clearChat.addEventListener("click", resetConversation);
 newChatNav.addEventListener("click", resetConversation);
+
+// 日间/夜间模式切换
+const themeToggle = document.querySelector("#themeToggle");
+const THEME_KEY = "maijiai_theme";
+
+function applyTheme(theme) {
+  if (theme === "light") {
+    document.body.classList.add("light-mode");
+    if (themeToggle) themeToggle.querySelector(".theme-label").textContent = "夜间模式";
+  } else {
+    document.body.classList.remove("light-mode");
+    if (themeToggle) themeToggle.querySelector(".theme-label").textContent = "日间模式";
+  }
+}
+
+// 初始化主题
+applyTheme(localStorage.getItem(THEME_KEY) || "dark");
+
+themeToggle?.addEventListener("click", () => {
+  const isLight = document.body.classList.contains("light-mode");
+  const next = isLight ? "dark" : "light";
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+});
 
 adminNav.addEventListener("click", openAdminView);
 adminCreateExpert.addEventListener("click", openCreatorView);

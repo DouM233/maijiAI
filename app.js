@@ -385,7 +385,7 @@ async function requestChatStreamReply(message, onDelta, onDone, onError) {
 function syncSidebarMenuState(isOpen) {
   workspace.classList.toggle("sidebar-open", isOpen);
   sidebar.classList.toggle("menu-open", isOpen);
-  sidebarMenuToggle.setAttribute("aria-expanded", String(isOpen));
+  if (sidebarMenuToggle) sidebarMenuToggle.setAttribute("aria-expanded", String(isOpen));
 }
 
 function closeSidebarMenu() {
@@ -399,7 +399,7 @@ function toggleSidebarMenu() {
 }
 
 function setActiveNav(activeButton) {
-  [newChatNav, adminNav].forEach((button) => {
+  [newChatNav, adminNav].filter(Boolean).forEach((button) => {
     button.classList.toggle("active", button === activeButton);
   });
 }
@@ -828,10 +828,12 @@ function applyUserInfo(user) {
   if (!token) return;
 
   // 有 token 就直接进工作区，不等 user.name
-  loginView.classList.add("is-hidden");
-  workspace.classList.remove("is-hidden");
-  setActiveNav(newChatNav);
-  syncSidebarMenuState(false);
+  try {
+    loginView.classList.add("is-hidden");
+    workspace.classList.remove("is-hidden");
+    setActiveNav(newChatNav);
+    syncSidebarMenuState(false);
+  } catch(e) { console.warn("auth init:", e); }
 
   // 先用本地缓存显示
   try {
@@ -1391,9 +1393,9 @@ themeToggle?.addEventListener("click", () => {
   applyTheme(next);
 });
 
-adminNav.addEventListener("click", openAdminView);
+adminNav?.addEventListener("click", openAdminView);
 adminCreateExpert.addEventListener("click", openCreatorView);
-sidebarMenuToggle.addEventListener("click", toggleSidebarMenu);
+sidebarMenuToggle?.addEventListener("click", toggleSidebarMenu);
 
 [policyDepartment, policyUser, policyQuota, policyPro, policyAudit].forEach((field) => {
   field.addEventListener("input", updatePolicyPreview);

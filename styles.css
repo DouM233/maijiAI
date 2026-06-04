@@ -3513,6 +3513,7 @@ button {
 
 /* ══════════════════════════════════
 
+
 /* ══════════════════════════════════
    日间/夜间模式切换按钮
 ══════════════════════════════════ */
@@ -3532,184 +3533,261 @@ button {
   cursor: pointer;
   transition: background 140ms, color 140ms;
 }
-
 .theme-toggle:hover {
   background: rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.85);
 }
-
-.theme-icon-sun { display: none; font-size: 0.95rem; }
-.theme-icon-moon { display: inline; font-size: 0.9rem; }
+.theme-icon-sun  { display: none;   font-size: 0.95rem; }
+.theme-icon-moon { display: inline; font-size: 0.9rem;  }
 
 /* ══════════════════════════════════
-   body.light-mode — 完整日间模式覆盖
+   body.light-mode  —  完整日间模式
 ══════════════════════════════════ */
 
 /* 切换按钮自身 */
-body.light-mode .theme-toggle { color: #666e80; }
-body.light-mode .theme-toggle:hover { background: rgba(0,0,0,0.05); color: #1a1f2e; }
+body.light-mode .theme-toggle { color: #64748b; }
+body.light-mode .theme-toggle:hover { background: rgba(0,0,0,0.05); color: #1e293b; }
 body.light-mode .theme-icon-sun  { display: inline; }
-body.light-mode .theme-icon-moon { display: none; }
+body.light-mode .theme-icon-moon { display: none;   }
 
-/* ── 整体工作区 ── */
-body.light-mode .workspace { background: #f0f2f5; }
+/* ── 整体工作区 ────────────────── */
+body.light-mode .workspace { background: #f1f5f9; }
 
-/* ── 侧栏 ── */
+/* ── 侧栏 ──────────────────────── */
 body.light-mode .sidebar {
   background: #ffffff;
-  border-right: 1px solid #e2e6ed;
+  border-right: 1px solid #e2e8f0;
 }
-body.light-mode .sidebar-top { border-bottom-color: #e2e6ed; }
-body.light-mode .sidebar-footer { border-top-color: #e2e6ed; }
+body.light-mode .sidebar-top { border-bottom-color: #e2e8f0; }
+body.light-mode .sidebar-footer { border-top-color: #e2e8f0; }
+body.light-mode .icon-button,
+body.light-mode .small-icon,
+body.light-mode .close-button { color: #475569; }
+body.light-mode .icon-button:hover { background: #f1f5f9; color: #1e293b; }
 body.light-mode .new-chat-button {
-  background: #f5f6f8;
-  border-color: #dde1e9;
-  color: #1a1f2e;
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #1e293b;
 }
-body.light-mode .new-chat-button:hover { background: #eaecf0; }
+body.light-mode .new-chat-button:hover { background: #e8edf5; }
 body.light-mode .new-chat-button.active {
-  background: #1a1f2e;
+  background: #1e293b;
   color: #fff;
   border-color: transparent;
 }
-body.light-mode .nav-button { color: #4a5060; }
-body.light-mode .nav-button:hover { background: #eaecf0; color: #1a1f2e; }
-body.light-mode .nav-button.active { background: #eaecf0; color: #1a1f2e; }
-body.light-mode .section-label span { color: #8a94a8; }
-body.light-mode .history-item-wrap:hover { background: #f5f6f8; border-radius: 0.4rem; }
-body.light-mode .history-item { color: #4a5060; }
-body.light-mode .history-item:hover { color: #1a1f2e; }
-body.light-mode .history-delete { color: #8a94a8; }
+body.light-mode .nav-button,
+body.light-mode .nav-item { color: #475569; }
+body.light-mode .nav-button:hover,
+body.light-mode .nav-item:hover { background: #f1f5f9; color: #1e293b; }
+body.light-mode .nav-button.active,
+body.light-mode .nav-item.active { background: #e8edf5; color: #1e293b; }
+body.light-mode .section-label span { color: #94a3b8; }
+body.light-mode .history-item-wrap:hover { background: #f8fafc; border-radius: 0.4rem; }
+body.light-mode .history-item { color: #475569; }
+body.light-mode .history-item:hover { color: #1e293b; }
+body.light-mode .history-delete { color: #94a3b8; }
 body.light-mode .history-delete:hover { background: #fee2e2; color: #dc2626; }
-body.light-mode .user-chip { color: #4a5060; }
-body.light-mode .user-chip:hover { background: #eaecf0; }
+body.light-mode .user-chip { color: #475569; }
+body.light-mode .user-chip:hover { background: #f1f5f9; }
+body.light-mode .avatar { background: #334155; color: #fff; }
 
-/* ── 顶栏 ── */
-body.light-mode .topbar { background: #f0f2f5; border-bottom: 1px solid #e2e6ed; }
-body.light-mode .product-name { color: #1a1f2e; }
-body.light-mode .spark { color: #1a1f2e; }
-body.light-mode .chat-title { color: #1a1f2e; }
-body.light-mode .account-button { background: #e2e6ed; color: #1a1f2e; }
-body.light-mode .account-button:hover { background: #d5d9e2; }
+/* ── 顶栏 ──────────────────────── */
+body.light-mode .topbar {
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+body.light-mode .product-name,
+body.light-mode .spark { color: #1e293b; }
+body.light-mode .account-button {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+body.light-mode .account-button:hover { background: #d0d9e8; }
 
-/* ── 内容区 & 主页 ── */
-body.light-mode .content { background: #f0f2f5; }
+/* ── 홈 주인공 영역 ─────────────── */
+body.light-mode .content,
+body.light-mode .content.chat-mode { background: #f1f5f9; }
 body.light-mode .hero-area::before,
 body.light-mode .hero-area::after { display: none; }
-body.light-mode .greeting p { color: #666e80; }
-body.light-mode .greeting h1 { color: #1a1f2e; }
-body.light-mode .hero-subtitle { color: #666e80; }
+body.light-mode .greeting p  { color: #64748b; }
+body.light-mode .greeting h1 { color: #0f172a; }
+body.light-mode .hero-subtitle { color: #64748b; }
 
-/* ── 输入框（首页 & 聊天） ── */
+/* ── 입력창 ─────────────────────── */
 body.light-mode .composer {
   background: #ffffff;
-  border-color: #dde1e9;
-  box-shadow: 0 2px 14px rgba(0,0,0,0.07);
+  border-color: #e2e8f0;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
 }
-body.light-mode .composer textarea { color: #1a1f2e; }
-body.light-mode .composer textarea::placeholder { color: #a0a9bb; }
-body.light-mode .tool-left { color: #4a5060; }
+body.light-mode .composer textarea { color: #1e293b; }
+body.light-mode .composer textarea::placeholder { color: #94a3b8; }
+body.light-mode .tool-left { color: #64748b; }
 body.light-mode .model-select {
-  color: #4a5060;
-  background: #f0f2f5;
-  border: 1px solid #dde1e9;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
 }
-body.light-mode .model-select:hover { color: #1a1f2e; }
-body.light-mode .small-icon { color: #4a5060; }
-body.light-mode .send-button { background: rgba(0,0,0,0.1); color: #4a5060; }
-body.light-mode .send-button.ready { background: #f97316; color: #fff; }
+body.light-mode .model-select:hover { color: #1e293b; }
+body.light-mode .send-button {
+  background: rgba(0,0,0,0.08);
+  color: #475569;
+}
+body.light-mode .send-button.ready {
+  background: #f97316;
+  color: #fff;
+}
 body.light-mode .send-button.ready:hover { background: #ea6c0a; }
 
-/* ── 模型菜单 ── */
+/* ── 모델 메뉴 ──────────────────── */
 body.light-mode .model-menu {
   background: #ffffff;
-  border-color: #dde1e9;
+  border-color: #e2e8f0;
   box-shadow: 0 8px 32px rgba(0,0,0,0.12);
 }
 body.light-mode .model-menu::after {
   background: #ffffff;
-  border-color: #dde1e9;
+  border-right-color: #e2e8f0;
+  border-bottom-color: #e2e8f0;
 }
-body.light-mode .model-option { color: #1a1f2e; }
+body.light-mode .model-option { color: #1e293b; }
+body.light-mode .model-option strong { color: #1e293b; }
+body.light-mode .model-option span  { color: #64748b; }
 body.light-mode .model-option:hover,
 body.light-mode .model-option.selected {
   background: #fff7ed;
   border-color: rgba(249,115,22,0.2);
 }
-body.light-mode .model-option.is-disabled { color: #a0a9bb; }
+body.light-mode .model-option.is-disabled { color: #94a3b8; }
 body.light-mode .model-option.selected::after { color: #f97316; }
-body.light-mode .model-option strong { color: #1a1f2e; }
-body.light-mode .model-option span { color: #666e80; }
 
-/* ── 工具区分组标题 ── */
+/* ── 工具区 ─────────────────────── */
 body.light-mode .tool-group { background: transparent; border: 0; }
-body.light-mode .group-title h2 { color: #1a1f2e; }
-body.light-mode .group-count { background: #e2e6ed; color: #666e80; }
-
-/* ── 工具卡片 ── */
+body.light-mode .group-title h2 { color: #1e293b; }
+body.light-mode .group-count { background: #e2e8f0; color: #64748b; }
 body.light-mode .agent-card {
   min-height: 5rem;
   align-items: flex-start;
   background: #ffffff;
-  border: 1px solid #e2e6ed;
-  color: #1a1f2e;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
 body.light-mode .agent-card:hover {
   background: #ffffff;
-  border-color: #c2d0e8;
+  border-color: #bcd0e8;
   box-shadow: 0 6px 20px rgba(0,0,0,0.09);
   transform: translateY(-2px);
 }
 body.light-mode .agent-card.is-pending:hover {
   transform: none;
-  border-color: #e2e6ed;
+  border-color: #e2e8f0;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
-body.light-mode .agent-card strong { color: #1a1f2e; font-size: 0.88rem; }
-body.light-mode .agent-card small { color: #666e80; }
+body.light-mode .agent-card strong { color: #1e293b; font-size: 0.88rem; }
+body.light-mode .agent-card small  { color: #64748b; }
 body.light-mode .agent-card::after { display: none; }
 
-/* ── 聊天区 ── */
-body.light-mode .chat-view { color: #1a1f2e; }
-body.light-mode .chat-header { border-bottom-color: #e2e6ed; }
+/* ── 채팅 헤더 & 버튼 ───────────── */
+body.light-mode .chat-view { color: #1e293b; }
+body.light-mode .chat-header {
+  border-bottom-color: #e2e8f0;
+  background: #f1f5f9;
+}
 body.light-mode .chat-header h2,
-body.light-mode .chat-header .eyebrow { color: #1a1f2e; }
+body.light-mode .chat-header .eyebrow { color: #1e293b; }
+body.light-mode .secondary-button,
+body.light-mode .secondary-button.compact {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+body.light-mode .secondary-button:hover,
+body.light-mode .secondary-button.compact:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+/* ── 메시지 ─────────────────────── */
+body.light-mode .message-avatar {
+  background: #e2e8f0;
+  color: #475569;
+}
+body.light-mode .message.user .message-avatar {
+  background: #1e293b;
+  color: #fff;
+}
+body.light-mode .message-meta { color: #94a3b8; }
 body.light-mode .message-bubble {
   background: #ffffff;
-  border: 1px solid #e2e6ed;
-  color: #1a1f2e;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
 }
 body.light-mode .message.user .message-bubble {
-  background: #1a1f2e;
+  background: #1e293b;
   border-color: transparent;
   color: #fff;
 }
-body.light-mode .message-avatar { background: #e2e6ed; color: #4a5060; }
-body.light-mode .message.user .message-avatar { background: #1a1f2e; color: #fff; }
-body.light-mode .message-meta { color: #8a94a8; }
-body.light-mode .message-content { color: #1a1f2e; }
-body.light-mode .markdown-body code { background: #f0f2f5; color: #b91c1c; }
-body.light-mode .markdown-body pre { background: #1e2330; }
-body.light-mode .thinking { background: #f5f6f8; border-color: #e2e6ed; }
+body.light-mode .message-content { color: #1e293b; }
 
-/* ── 专家状态栏 ── */
+/* Markdown 日间色 */
+body.light-mode .markdown-body h1,
+body.light-mode .markdown-body h2,
+body.light-mode .markdown-body h3,
+body.light-mode .markdown-body h4 { color: #1e293b; }
+body.light-mode .markdown-body blockquote {
+  border-left-color: #f97316;
+  background: #fff7ed;
+  color: #64748b;
+}
+body.light-mode .markdown-body code {
+  background: #f1f5f9;
+  color: #b91c1c;
+}
+body.light-mode .markdown-body pre {
+  background: #1e293b;
+  border-color: #334155;
+}
+body.light-mode .markdown-body table,
+body.light-mode .markdown-body th,
+body.light-mode .markdown-body td { border-color: #e2e8f0; }
+body.light-mode .markdown-body th { background: #f8fafc; color: #1e293b; }
+body.light-mode .markdown-body td { color: #1e293b; }
+body.light-mode .markdown-body a  { color: #2563eb; }
+
+/* thinking 气泡 */
+body.light-mode .thinking .message-bubble {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+/* ── 전문가 상태 ─────────────────── */
 body.light-mode .expert-state {
   background: #ffffff;
-  border-color: #e2e6ed;
-  color: #1a1f2e;
+  border-color: #e2e8f0;
+  color: #1e293b;
 }
-body.light-mode .expert-state .eyebrow { color: #666e80; }
-body.light-mode .exit-expert {
-  color: #4a5060;
-  border-color: #dde1e9;
+body.light-mode .expert-state .eyebrow { color: #64748b; }
+body.light-mode #exitExpert {
+  color: #475569;
+  border-color: #e2e8f0;
 }
-body.light-mode .exit-expert:hover { background: #eaecf0; }
+body.light-mode #exitExpert:hover { background: #f1f5f9; }
+body.light-mode #activeExpertName { color: #1e293b; }
 
-/* ── 附件托盘 ── */
-body.light-mode .attachment-tray { background: #f5f6f8; border-color: #e2e6ed; }
-body.light-mode .attachment-chip { background: #ffffff; border-color: #dde1e9; color: #1a1f2e; }
+/* ── 부착 트레이 ─────────────────── */
+body.light-mode .attachment-tray {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+body.light-mode .attachment-chip {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #1e293b;
+}
 
-/* ── 对话删除按钮 ── */
-body.light-mode .clear-chat { color: #8a94a8; }
-body.light-mode .clear-chat:hover { color: #dc2626; }
+/* ── 기타 ────────────────────────── */
+body.light-mode .clear-chat,
+body.light-mode #clearChat { color: #94a3b8; }
+body.light-mode #clearChat:hover { color: #dc2626; }
+body.light-mode .model-label { color: #475569; }

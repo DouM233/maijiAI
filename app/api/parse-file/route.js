@@ -1,9 +1,20 @@
 import { NextResponse } from "next/server";
+import { createRequire } from "node:module";
 import mammoth from "mammoth";
 
 export const runtime = "nodejs";
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
+
+// 在 Node.js 中解析 require.resolve 来定位 worker 文件路径
+const _require = createRequire(import.meta.url);
+const WORKER_SRC = (() => {
+  try {
+    return _require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
+  } catch {
+    return "";
+  }
+})();
 
 function normalizeText(value) {
   return String(value || "")
@@ -13,9 +24,11 @@ function normalizeText(value) {
 }
 
 async function parsePdf(buffer) {
-  // 使用 pdfjs-dist legacy build，不依赖浏览器 DOM API
   const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+  // 指向本地 worker 文件，避免 "No workerSrc specified" 报错
+  if (WORKER_SRC) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_SRC;
+  }
 
   const loadingTask = pdfjsLib.getDocument({
     data: new Uint8Array(buffer),

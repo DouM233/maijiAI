@@ -157,10 +157,17 @@ async function restoreConversation(convId, agentId) {
     messageList.innerHTML = "";
     contentArea.classList.add("chat-mode");
     chatView.classList.remove("is-hidden");
+    chatView.style.display = "";  // 清除 resetConversation 的强制隐藏
     chatTitle.textContent = agentId || "对话";
     currentConversationMessages.forEach(function(m) {
       if (m.role === "user" || m.role === "assistant") {
-        addMessage(m.role === "user" ? "user" : "ai", m.content);
+        // 恢复显示时，对用户消息去掉附件原文（只显示用户输入的文字）
+        var displayContent = m.content;
+        if (m.role === "user") {
+          var attachIdx = m.content.indexOf("## 附件材料");
+          if (attachIdx > 0) displayContent = m.content.slice(0, attachIdx).trim();
+        }
+        addMessage(m.role === "user" ? "user" : "ai", displayContent, { markdown: m.role === "assistant" });
       }
     });
   } catch (e) { console.warn("恢复对话失败:", e); }

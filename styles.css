@@ -3919,3 +3919,74 @@ body.light-mode .home-button:hover {
   color: #1e293b;
   border-color: #cbd5e1;
 }
+
+/* ── Markdown 日间模式颜色（全覆盖）── */
+body.light-mode .markdown-body {
+  color: #1e293b;
+}
+body.light-mode .markdown-body p,
+body.light-mode .markdown-body li,
+body.light-mode .markdown-body strong,
+body.light-mode .markdown-body em,
+body.light-mode .markdown-body span {
+  color: #1e293b;
+}
+body.light-mode .markdown-body h1,
+body.light-mode .markdown-body h2,
+body.light-mode .markdown-body h3,
+body.light-mode .markdown-body h4 {
+  color: #0f172a;
+}
+body.light-mode .markdown-body blockquote {
+  border-left-color: #f97316;
+  background: #fff7ed;
+  color: #64748b;
+}
+body.light-mode .markdown-body blockquote * {
+  color: #64748b;
+}
+body.light-mode .markdown-body code {
+  background: #f1f5f9;
+  color: #b91c1c;
+}
+body.light-mode .markdown-body pre {
+  background: #1e293b;
+  border-color: #334155;
+}
+body.light-mode .markdown-body pre code {
+  color: #e2e8f0;
+}
+body.light-mode .markdown-body table { border-color: #e2e8f0; }
+body.light-mode .markdown-body th {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #e2e8f0;
+}
+body.light-mode .markdown-body td {
+  color: #1e293b;
+  border-color: #e2e8f0;
+}
+body.light-mode .markdown-body a { color: #2563eb; }
+body.light-mode .markdown-body hr { border-top-color: #e2e8f0; }
+
+/* 夜间模式 Markdown 颜色（确保继承正确）*/
+.markdown-body {
+  color: inherit;
+}
+
+/* ── 聊天模式下白块修复 ── */
+/* hero-area 在聊天模式下颜色与内容区一致 */
+.chat-mode .hero-area {
+  background: transparent;
+}
+body.light-mode .chat-mode .hero-area {
+  background: transparent;
+}
+/* 防止 chat-mode 超出视口产生白块 */
+.content.chat-mode {
+  overflow: hidden;
+}
+.chat-mode .message-list {
+  overflow-y: auto;
+  overflow-x: hidden;
+}

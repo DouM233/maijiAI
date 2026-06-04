@@ -1,20 +1,10 @@
 import { NextResponse } from "next/server";
-import { createRequire } from "node:module";
 import mammoth from "mammoth";
+import PDFParser from "pdf2json";
 
 export const runtime = "nodejs";
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
-
-// 在 Node.js 中解析 require.resolve 来定位 worker 文件路径
-const _require = createRequire(import.meta.url);
-const WORKER_SRC = (() => {
-  try {
-    return _require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
-  } catch {
-    return "";
-  }
-})();
 
 function normalizeText(value) {
   return String(value || "")
@@ -23,33 +13,35 @@ function normalizeText(value) {
     .trim();
 }
 
-async function parsePdf(buffer) {
-  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  // 指向本地 worker 文件，避免 "No workerSrc specified" 报错
-  if (WORKER_SRC) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_SRC;
-  }
+function parsePdf(buffer) {
+  return new Promise((resolve, reject) => {
+    const parser = new PDFParser(null, 1);
 
-  const loadingTask = pdfjsLib.getDocument({
-    data: new Uint8Array(buffer),
-    useWorkerFetch: false,
-    isEvalSupported: false,
-    useSystemFonts: true,
+    parser.on("pdfParser_dataError", (err) => {
+      reject(new Error(err?.parserError || "PDF 解析失败"));
+    });
+
+    parser.on("pdfParser_dataReady", (data) => {
+      try {
+        const text = (data.Pages || [])
+          .map((page) =>
+            (page.Texts || [])
+              .map((t) =>
+                (t.R || [])
+                  .map((r) => decodeURIComponent(r.T || ""))
+                  .join("")
+              )
+              .join(" ")
+          )
+          .join("\n\n");
+        resolve(normalizeText(text));
+      } catch (e) {
+        reject(e);
+      }
+    });
+
+    parser.parseBuffer(buffer);
   });
-
-  const pdf = await loadingTask.promise;
-  const pages = [];
-
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const textContent = await page.getTextContent();
-    const pageText = textContent.items
-      .map((item) => ("str" in item ? item.str : ""))
-      .join(" ");
-    pages.push(pageText.trim());
-  }
-
-  return normalizeText(pages.filter(Boolean).join("\n\n"));
 }
 
 async function parseSingleFile(file) {
@@ -74,7 +66,9 @@ async function parseSingleFile(file) {
 
   if (ext === "pdf") {
     const content = await parsePdf(buffer);
-    if (!content) throw new Error(`PDF ${file.name} 未能提取到文字内容，请确认不是扫描件`);
+    if (!content) {
+      throw new Error(`PDF ${file.name} 未能提取到文字，请确认不是纯扫描件`);
+    }
     return {
       name: file.name,
       kind: "PDF",

@@ -60,3 +60,25 @@ export async function POST(request) {
 
   return NextResponse.json({ ok: true, conversationId });
 }
+
+// DELETE /api/conversations?id=xxx — 删除对话及其所有消息
+export async function DELETE(request) {
+  const userId = getUserId(request);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { searchParams } = new URL(request.url);
+  const convId = searchParams.get("id");
+  if (!convId) return NextResponse.json({ error: "id required" }, { status: 400 });
+
+  // 确认该对话属于当前用户
+  const [rows] = await pool.execute(
+    "SELECT id FROM conversations WHERE id = ? AND user_id = ?",
+    [convId, userId]
+  );
+  if (!rows.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  await pool.execute("DELETE FROM messages WHERE conversation_id = ?", [convId]);
+  await pool.execute("DELETE FROM conversations WHERE id = ?", [convId]);
+
+  return NextResponse.json({ ok: true });
+}

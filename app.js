@@ -98,6 +98,17 @@ async function saveConversation(userMsg, assistantMsg) {
   } catch (e) { console.warn("保存对话失败:", e); }
 }
 
+async function deleteConversation(convId) {
+  try {
+    await fetch("/api/conversations?id=" + encodeURIComponent(convId), {
+      method: "DELETE",
+      headers: authHeaders()
+    });
+    if (currentConversationId === convId) resetConversation();
+    loadConversationList();
+  } catch (e) { console.warn("删除对话失败:", e); }
+}
+
 async function loadConversationList() {
   if (!getAuthToken()) return;
   try {
@@ -106,14 +117,28 @@ async function loadConversationList() {
     var data = await res.json();
     historyList.innerHTML = "";
     (data.conversations || []).forEach(function(conv) {
+      var item = document.createElement("div");
+      item.className = "history-item-wrap";
+
       var btn = document.createElement("button");
       btn.className = "history-item";
       btn.type = "button";
       btn.textContent = conv.title.length > 14 ? conv.title.slice(0, 14) + "..." : (conv.title || "对话");
       btn.dataset.convId = conv.id;
-      btn.dataset.agentId = conv.agent_id || "";
       btn.addEventListener("click", function() { restoreConversation(conv.id, conv.agent_id); });
-      historyList.append(btn);
+
+      var del = document.createElement("button");
+      del.className = "history-delete";
+      del.type = "button";
+      del.setAttribute("aria-label", "删除对话");
+      del.textContent = "×";
+      del.addEventListener("click", function(e) {
+        e.stopPropagation();
+        deleteConversation(conv.id);
+      });
+
+      item.append(btn, del);
+      historyList.append(item);
     });
   } catch (e) { console.warn("加载对话列表失败:", e); }
 }
@@ -1045,7 +1070,12 @@ async function replaceThinkingMessage(text) {
       (fullReply) => {
         const finalReply = fullReply || buildExpertReply(text);
         currentConversationMessages.push({ role: "assistant", content: finalReply });
-        content.textContent = finalReply;
+        if (window.marked) {
+          content.innerHTML = window.marked.parse(finalReply);
+        } else {
+          content.textContent = finalReply;
+        }
+        content.classList.add("markdown-body");
         messageList.scrollTop = messageList.scrollHeight;
         finishGenerating();
         saveConversation(text, finalReply);
@@ -1497,24 +1527,7 @@ exitExpert.addEventListener("click", () => {
   promptInput.placeholder = "在这里输入任何问题...";
 });
 
-function resetConversation() {
-  setActiveNav(newChatNav);
-  closeSidebarMenu();
-  currentConversationId = "";
-  currentConversationMessages = [];
-  messageList.innerHTML = "";
-  contentArea.classList.remove("chat-mode");
-  contentArea.classList.remove("creator-mode");
-  contentArea.classList.remove("knowledge-mode");
-  contentArea.classList.remove("admin-mode");
-  creatorView.classList.add("is-hidden");
-  knowledgeView.classList.add("is-hidden");
-  adminView.classList.add("is-hidden");
-  chatView.classList.add("is-hidden");
-  chatTitle.textContent = "新的麦吉AI对话";
-  promptInput.focus();
-}
-
+// resetConversation 定义在 line ~765，此处仅绑定事件
 clearChat.addEventListener("click", resetConversation);
 newChatNav.addEventListener("click", resetConversation);
 

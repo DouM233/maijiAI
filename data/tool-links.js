@@ -14,6 +14,16 @@ window.MAIJI_TOOL_LINKS = {
     url: "https://maijigif.coze.site/",
     status: "已上线"
   },
+  "ai-voice-music": {
+    name: "AI声音克隆/音乐生成",
+    url: "https://maiji-tts.coze.site/",
+    status: "已上线"
+  },
+  "stp-previewer": {
+    name: "STP 预览器",
+    url: "https://maijiai-stp.coze.site/",
+    status: "已上线"
+  },
   "personal-interviewer": {
     name: "个人访谈官",
     url: "",

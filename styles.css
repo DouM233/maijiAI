@@ -1493,6 +1493,10 @@ button {
 /* 小红书图标色 */
 .card-icon.redbook     { background: #fff0f0; color: #d63b3b; }
 
+/* 其他工作工具图标色 */
+.card-icon.voice-music { background: #f0f4ff; color: #3b6fd6; }
+.card-icon.stp         { background: #fff3ec; color: #c4621a; }
+
 .target {
   color: #e1393d;
   background: #fff0f0;
@@ -3283,4 +3287,73 @@ button {
   }
 
   .sidebar {
-    displ
+    display: none;
+  }
+
+  .content {
+    padding: 1rem 1rem 3rem;
+  }
+
+  .hero-area {
+    margin-top: 6rem;
+  }
+
+  .hero-area::before {
+    top: 8rem;
+    width: min(42rem, 94vw);
+    height: 20rem;
+  }
+
+  .hero-area::after {
+    top: 8.2rem;
+    width: min(28rem, 78vw);
+    height: 12rem;
+  }
+
+  .tool-sections {
+    width: min(44rem, 100%);
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .hero-area {
+    margin-top: 4rem;
+  }
+
+  .hero-area::before {
+    top: 7.2rem;
+    width: 92vw;
+    height: 16rem;
+  }
+
+  .hero-area::after {
+    top: 7.4rem;
+    width: 72vw;
+    height: 9.5rem;
+  }
+
+  .greeting h1 {
+    font-size: 2rem;
+  }
+
+  .composer {
+    width: 100%;
+  }
+
+  .model-menu {
+    width: min(18.5rem, calc(100vw - 2rem));
+    right: 0;
+  }
+
+  .tool-sections {
+    margin-top: 3rem;
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}

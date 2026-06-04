@@ -1322,6 +1322,7 @@ exitExpert.addEventListener("click", () => {
 // resetConversation 定义在 line ~765，此处仅绑定事件
 clearChat.addEventListener("click", resetConversation);
 newChatNav.addEventListener("click", resetConversation);
+document.querySelector("#homeButton")?.addEventListener("click", resetConversation);
 
 // 日间/夜间模式切换
 const themeToggle = document.querySelector("#themeToggle");

@@ -3791,3 +3791,131 @@ body.light-mode .clear-chat,
 body.light-mode #clearChat { color: #94a3b8; }
 body.light-mode #clearChat:hover { color: #dc2626; }
 body.light-mode .model-label { color: #475569; }
+
+/* ── 日间模式补丁（logo / model-select / expert-state / attachment）── */
+
+/* Logo 区域 */
+body.light-mode .sidebar-brand { color: #1e293b; }
+body.light-mode .brand-flare   { color: #f97316; text-shadow: none; }
+body.light-mode .sidebar-top .icon-button {
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+/* 模型选择器 */
+body.light-mode .model-select {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  box-shadow: none;
+}
+body.light-mode .model-select:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+  box-shadow: none;
+  transform: none;
+}
+body.light-mode .model-select.locked {
+  color: #f97316;
+  border-color: rgba(249,115,22,0.25);
+  background: #fff7ed;
+}
+body.light-mode #modelLabel { color: #1e293b; }
+body.light-mode .model-select-caption { color: #94a3b8; }
+body.light-mode .model-select-caret { color: #94a3b8; }
+body.light-mode .small-icon { color: #64748b; }
+
+/* 专家状态栏 */
+body.light-mode .expert-state {
+  background: #fff7ed;
+  border-top: 1px solid #fed7aa;
+  color: #1e293b;
+}
+body.light-mode .expert-state span  { color: #64748b; font-size: 0.82rem; }
+body.light-mode .expert-state strong { color: #1e293b; }
+body.light-mode #exitExpert {
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.82rem;
+}
+body.light-mode #exitExpert:hover { background: #e2e8f0; color: #1e293b; }
+
+/* 附件芯片 */
+body.light-mode .attachment-tray { background: #f8fafc; border-top-color: #e2e8f0; }
+body.light-mode .attachment-chip {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+  border-radius: 0.5rem;
+}
+body.light-mode .attachment-chip-copy strong { color: #1e293b; }
+body.light-mode .attachment-chip-copy small  { color: #64748b; }
+body.light-mode .attachment-remove { color: #94a3b8; }
+body.light-mode .attachment-remove:hover { color: #dc2626; background: #fee2e2; }
+
+/* 首页输入框区发送按钮（首页用的是深色 send-button 版本）*/
+body.light-mode .send-button {
+  background: #e2e8f0;
+  color: #475569;
+  box-shadow: none;
+}
+body.light-mode .send-button.ready {
+  background: #f97316;
+  color: #fff;
+  box-shadow: none;
+}
+
+/* 「新对话」按钮 */
+body.light-mode .secondary-button.compact {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+body.light-mode .secondary-button.compact:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+/* ── 返回主页按钮 ── */
+.chat-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.home-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  color: rgba(255, 255, 255, 0.6);
+  background: transparent;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 140ms, color 140ms, border-color 140ms;
+}
+
+.home-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* 日间模式下的返回按钮 */
+body.light-mode .home-button {
+  border-color: #e2e8f0;
+  color: #64748b;
+  background: #ffffff;
+}
+body.light-mode .home-button:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}

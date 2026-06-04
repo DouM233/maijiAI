@@ -408,19 +408,6 @@ function getExpertConfig(name) {
   return expertConfigs[name] || null;
 }
 
-function buildExpertSummary(name) {
-  const expert = getExpertConfig(name);
-  if (!expert) return "请总结当前对话上下文，并交给该专家继续处理。";
-
-  return [
-    `即将启用专家：${expert.name}`,
-    `专家定位：${expert.profile.expertise}`,
-    `沟通语气：${expert.profile.tone}`,
-    `语言风格：${expert.profile.language}`,
-    `核心目标：${expert.goals.join("；")}`,
-    `工作流：${expert.workflow.join(" -> ")}`
-  ].join("\n");
-}
 
 function buildExpertReply(text) {
   const expert = getExpertConfig(activeExpert);
@@ -625,84 +612,8 @@ function buildExpertSummary(name) {
   ].join("\n");
 }
 
-function openConversation(text) {
-  contentArea.classList.add("chat-mode");
-  chatView.classList.remove("is-hidden");
-  chatTitle.textContent = activeExpert
-    ? getAssistantLabel()
-    : text.length > 18
-      ? `${text.slice(0, 18)}...`
-      : text || "新的麦吉AI对话";
-}
 
-function addMessage(role, text, options = {}) {
-  const { markdown = role === "ai" } = options;
-  const message = document.createElement("article");
-  message.className = `message ${role}`;
 
-  const avatar = document.createElement("span");
-  avatar.className = "message-avatar";
-  avatar.textContent = role === "user" ? "我" : "麦";
-
-  const bubble = document.createElement("div");
-  bubble.className = "message-bubble";
-
-  const meta = document.createElement("div");
-  meta.className = "message-meta";
-  meta.textContent = role === "user" ? "你" : getAssistantLabel();
-
-  const content = document.createElement("div");
-  renderMessageContent(content, text, markdown);
-
-  bubble.append(meta, content);
-
-  if (role === "user") {
-    message.append(bubble, avatar);
-  } else {
-    message.append(avatar, bubble);
-  }
-
-  messageList.append(message);
-  messageList.scrollTop = messageList.scrollHeight;
-}
-
-function addStreamingMessage(role, text) {
-  const message = document.createElement("article");
-  message.className = `message ${role}`;
-
-  const avatar = document.createElement("span");
-  avatar.className = "message-avatar";
-  avatar.textContent = "麦";
-
-  const bubble = document.createElement("div");
-  bubble.className = "message-bubble";
-
-  const meta = document.createElement("div");
-  meta.className = "message-meta";
-  meta.textContent = getAssistantLabel();
-
-  const content = document.createElement("div");
-  content.className = "message-content";
-  bubble.append(meta, content);
-  message.append(avatar, bubble);
-  messageList.append(message);
-
-  let index = 0;
-  const timer = window.setInterval(() => {
-    content.textContent = text.slice(0, index + 1);
-    index += 1;
-    messageList.scrollTop = messageList.scrollHeight;
-
-    if (index >= text.length) {
-      window.clearInterval(timer);
-      renderMessageContent(content, text, true);
-      isGenerating = false;
-      sendButton.textContent = "▶";
-      sendButton.setAttribute("aria-label", "发送");
-      sendButton.classList.toggle("ready", promptInput.value.trim().length > 0);
-    }
-  }, 14);
-}
 
 function activateAgent(agentId, options = {}) {
   const { showWelcome = true } = options;
@@ -737,8 +648,6 @@ function activateAgent(agentId, options = {}) {
 
   promptInput.focus();
 }
-
-// bindAgentCard 完整定义见文件底部，此处已移除重复定义
 
 
 function resetConversation() {
@@ -924,41 +833,7 @@ sendButton.addEventListener("click", async () => {
   await replaceThinkingMessage(outboundText);
 });
 
-function openConversation(text) {
-  contentArea.classList.add("chat-mode");
-  chatView.classList.remove("is-hidden");
-  chatTitle.textContent = activeExpert || (text.length > 18 ? `${text.slice(0, 18)}...` : text);
-}
 
-function addMessage(role, text) {
-  const message = document.createElement("article");
-  message.className = `message ${role}`;
-
-  const avatar = document.createElement("span");
-  avatar.className = "message-avatar";
-  avatar.textContent = role === "user" ? "我" : "麦";
-
-  const bubble = document.createElement("div");
-  bubble.className = "message-bubble";
-
-  const meta = document.createElement("div");
-  meta.className = "message-meta";
-  meta.textContent = role === "user" ? "你" : activeExpert || selectedModel;
-
-  const content = document.createElement("div");
-  content.textContent = text;
-
-  bubble.append(meta, content);
-
-  if (role === "user") {
-    message.append(bubble, avatar);
-  } else {
-    message.append(avatar, bubble);
-  }
-
-  messageList.append(message);
-  messageList.scrollTop = messageList.scrollHeight;
-}
 
 function addThinkingMessage() {
   isGenerating = true;
@@ -1095,7 +970,7 @@ document.addEventListener("click", (event) => {
   }
 });
 
-// bindAgentCard 完整定义在 line ~741，此处仅绑定
+
 document.querySelectorAll(".agent-card").forEach(bindAgentCard);
 
 toolLeft?.addEventListener("click", () => {
@@ -1596,4 +1471,95 @@ function bindAgentCard(card) {
     card.addEventListener(
       "click",
       (event) => {
-        event.preventDef
+        event.preventDefault();
+        event.stopPropagation();
+        activateAgent(agentId, { showWelcome: true });
+      },
+      { capture: true }
+    );
+    card.setAttribute("title", `进入${agent.name}`);
+    return;
+  }
+
+  if (tool?.url) {
+    card.addEventListener("click", () => {
+      window.open(tool.url, "_blank", "noopener,noreferrer");
+    });
+    card.setAttribute("title", `打开${tool.name || "工具"}`);
+    return;
+  }
+
+  if (tool) {
+    card.classList.add("is-pending");
+    card.setAttribute("title", `${tool.name || "工具"}正在接入`);
+    const textWrap = card.querySelector("span:last-child");
+    if (textWrap && !textWrap.querySelector(".tool-status")) {
+      const status = document.createElement("em");
+      status.className = "tool-status";
+      status.textContent = tool.status || "待接入";
+      textWrap.append(status);
+    }
+    return;
+  }
+
+  card.addEventListener("click", () => {
+    pendingExpert = card.dataset.agent;
+    summaryText.value = buildExpertSummary(pendingExpert);
+    summaryModal.classList.remove("is-hidden");
+    summaryText.focus();
+  });
+}
+
+
+confirmSummary.addEventListener(
+  "click",
+  (event) => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    activateAgent(pendingExpert, { showWelcome: false });
+  },
+  { capture: true }
+);
+
+exitExpert.addEventListener(
+  "click",
+  (event) => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    activeExpert = "";
+    activeExpertName.textContent = "";
+    expertState.classList.add("is-hidden");
+    expertState.style.display = "";
+    modelSelect.classList.remove("locked");
+    modelLabel.textContent = selectedModel;
+    promptInput.placeholder = getAgentPlaceholder();
+  },
+  { capture: true }
+);
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !summaryModal.classList.contains("is-hidden")) {
+    closeSummaryModal();
+  }
+
+  if (event.key === "Escape" && !modelMenu.classList.contains("is-hidden")) {
+    closeModelMenu();
+  }
+
+  if (event.key === "Escape" && workspace.classList.contains("sidebar-open")) {
+    closeSidebarMenu();
+  }
+});
+
+document.addEventListener("click", (event) => {
+  if (!isCompactLayout()) return;
+  if (!workspace.classList.contains("sidebar-open")) return;
+  if (sidebar.contains(event.target)) return;
+  closeSidebarMenu();
+});
+
+window.addEventListener("resize", () => {
+  if (!isCompactLayout()) {
+    syncSidebarMenuState(false);
+  }
+});

@@ -651,29 +651,50 @@ function activateAgent(agentId, options = {}) {
 
 
 function resetConversation() {
-  setActiveNav(newChatNav);
-  closeSidebarMenu();
+  // 状态重置
   currentConversationId = "";
   currentConversationMessages = [];
   activeExpert = "";
-  activeExpertName.textContent = "";
-  messageList.innerHTML = "";
-  contentArea.classList.remove("chat-mode");
-  contentArea.classList.remove("creator-mode");
-  contentArea.classList.remove("knowledge-mode");
-  contentArea.classList.remove("admin-mode");
-  creatorView.classList.add("is-hidden");
-  knowledgeView.classList.add("is-hidden");
-  adminView.classList.add("is-hidden");
-  chatView.classList.add("is-hidden");
-  expertState.classList.add("is-hidden");
-  expertState.style.display = "";
-  modelSelect.classList.remove("locked");
-  modelLabel.textContent = selectedModel;
-  chatTitle.textContent = "新的麦吉AI对话";
+
+  // DOM 文本
+  if (activeExpertName) activeExpertName.textContent = "";
+  if (messageList) messageList.innerHTML = "";
+  if (chatTitle) chatTitle.textContent = "新的麦吉AI对话";
+  if (modelSelect) modelSelect.classList.remove("locked");
+  if (modelLabel) modelLabel.textContent = selectedModel;
+
+  // 专家状态栏隐藏
+  if (expertState) {
+    expertState.classList.add("is-hidden");
+    expertState.style.display = "none";
+  }
+
+  // 强制隐藏所有子视图（双保险：class + style）
+  [chatView, creatorView, knowledgeView, adminView].forEach(function(v) {
+    if (v) { v.classList.add("is-hidden"); v.style.display = "none"; }
+  });
+
+  // 移除内容区 mode 类
+  contentArea.classList.remove("chat-mode", "creator-mode", "knowledge-mode", "admin-mode");
+
+  // 工具主页强制可见
+  var toolSections = document.getElementById("toolSections");
+  var heroArea = contentArea.querySelector(".hero-area");
+  if (toolSections) toolSections.style.display = "";
+  if (heroArea) heroArea.style.display = "";
+
+  // 模型选择器恢复
+  closeModelMenu?.();
+
+  // 导航 & 输入
+  setActiveNav(newChatNav);
+  closeSidebarMenu();
   clearAttachments();
-  promptInput.placeholder = getAgentPlaceholder();
-  promptInput.focus();
+  if (promptInput) {
+    promptInput.placeholder = getAgentPlaceholder();
+    promptInput.value = "";
+    promptInput.focus();
+  }
 }
 
 const creatorFields = {
@@ -783,32 +804,54 @@ dingLogin.addEventListener("click", () => {
 });
 
 // 检查登录状态 - 如果有 token 直接显示工作空间
+// 更新侧栏用户信息展示
+function applyUserInfo(user) {
+  if (!user) return;
+  var name = user.name || "用户";
+  var nameEl = document.querySelector("#userDisplayName");
+  if (nameEl) nameEl.textContent = name;
+  var avatarImg = document.querySelector("#userAvatar");
+  var avatarFallback = document.querySelector("#userAvatarFallback");
+  if (user.avatar && avatarImg) {
+    avatarImg.src = user.avatar;
+    avatarImg.style.display = "";
+    if (avatarFallback) avatarFallback.style.display = "none";
+  } else if (avatarFallback) {
+    avatarFallback.textContent = name.slice(0, 1);
+    avatarFallback.style.display = "";
+    if (avatarImg) avatarImg.style.display = "none";
+  }
+}
+
 (function checkAuthOnLoad() {
   var token = localStorage.getItem("maijiai_token");
-  var userStr = localStorage.getItem("maijiai_user");
-  if (token && userStr) {
-    try {
-      var user = JSON.parse(userStr);
-      if (user && user.name) {
-        loginView.classList.add("is-hidden");
-        workspace.classList.remove("is-hidden");
-        setActiveNav(newChatNav);
-        syncSidebarMenuState(false);
-        var nameEl = document.querySelector("#userDisplayName");
-        if (nameEl) nameEl.textContent = user.name;
-        var avatarImg = document.querySelector("#userAvatar");
-        var avatarFallback = document.querySelector("#userAvatarFallback");
-        if (user.avatar && avatarImg) {
-          avatarImg.src = user.avatar;
-          avatarImg.style.display = "";
-          if (avatarFallback) avatarFallback.style.display = "none";
-        } else if (avatarFallback && user.name) {
-          avatarFallback.textContent = user.name.slice(0, 1);
-        }
-        loadConversationList();
+  if (!token) return;
+
+  // 有 token 就直接进工作区，不等 user.name
+  loginView.classList.add("is-hidden");
+  workspace.classList.remove("is-hidden");
+  setActiveNav(newChatNav);
+  syncSidebarMenuState(false);
+
+  // 先用本地缓存显示
+  try {
+    var userStr = localStorage.getItem("maijiai_user");
+    if (userStr) applyUserInfo(JSON.parse(userStr));
+  } catch(e) {}
+
+  // 立即加载历史记录
+  loadConversationList();
+
+  // 再从服务端刷新用户信息（保证姓名/头像最新）
+  fetch("/api/auth/me", { headers: { Authorization: "Bearer " + token } })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (data && data.user) {
+        localStorage.setItem("maijiai_user", JSON.stringify(data.user));
+        applyUserInfo(data.user);
       }
-    } catch(e) {}
-  }
+    })
+    .catch(function() {});
 })();
 
 promptInput.addEventListener("input", () => {
@@ -1406,6 +1449,12 @@ bindCollapsibleSections();
 function openConversation(text) {
   contentArea.classList.add("chat-mode");
   chatView.classList.remove("is-hidden");
+  chatView.style.display = "";  // 清除 resetConversation 的强制 none
+  // 隐藏工具主页（恢复 CSS 控制）
+  var toolSections = document.getElementById("toolSections");
+  var heroArea = contentArea.querySelector(".hero-area");
+  if (toolSections) toolSections.style.display = "";
+  if (heroArea) heroArea.style.display = "";
   chatTitle.textContent = activeExpert
     ? getAssistantLabel()
     : text.length > 18

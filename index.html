@@ -62,6 +62,9 @@
           </div>
 
           <div class="sidebar-footer">
+            <button class="admin-entry" id="adminBadge" type="button" title="管理智能体" style="display:none">
+              ⚙ 管理智能体
+            </button>
             <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换日间/夜间模式" title="切换日间/夜间模式">
               <span class="theme-icon-sun">☀</span>
               <span class="theme-icon-moon">☾</span>
@@ -589,6 +592,62 @@
           </section>
         </div>
       </section>
+
+      <!-- 管理员专家管理面板 -->
+      <div class="modal-layer is-hidden" id="agentAdminPanel" role="dialog" aria-modal="true">
+        <div class="modal-card agent-admin-card">
+          <div class="modal-header">
+            <div>
+              <p class="eyebrow">仅管理员可见</p>
+              <h2>智能体管理</h2>
+            </div>
+            <button class="close-button" id="closeAgentAdmin" type="button" aria-label="关闭">×</button>
+          </div>
+          <div class="agent-admin-toolbar">
+            <button class="primary-button" id="addAgentBtn" type="button">＋ 新增智能体</button>
+          </div>
+          <div class="agent-admin-list" id="agentAdminList">
+            <p class="loading-text">加载中…</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 新增/编辑智能体表单 -->
+      <div class="modal-layer is-hidden" id="agentFormPanel" role="dialog" aria-modal="true">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h2 id="agentFormTitle">新增智能体</h2>
+            <button class="close-button" id="closeAgentForm" type="button" aria-label="关闭">×</button>
+          </div>
+          <div class="agent-form-grid">
+            <label class="form-field"><span>ID（英文短横线，不可重复）</span><input id="af-id" type="text" placeholder="e.g. my-agent" /></label>
+            <label class="form-field"><span>名称</span><input id="af-name" type="text" placeholder="智能体显示名称" /></label>
+            <label class="form-field"><span>描述</span><input id="af-desc" type="text" placeholder="一句话介绍" /></label>
+            <label class="form-field"><span>分类</span>
+              <select id="af-category">
+                <option>工作工具</option>
+                <option>电商工具</option>
+                <option>管理工具</option>
+                <option>小红书</option>
+              </select>
+            </label>
+            <label class="form-field"><span>图标 Emoji</span><input id="af-icon" type="text" placeholder="🤖" maxlength="4" /></label>
+            <label class="form-field"><span>开场白</span><input id="af-opening" type="text" placeholder="进入对话后的首条消息" /></label>
+            <label class="form-field"><span>输入框提示语</span><input id="af-placeholder" type="text" placeholder="Placeholder 文字" /></label>
+            <label class="form-field form-field--full"><span>System Prompt</span>
+              <textarea id="af-prompt" rows="8" placeholder="智能体的系统提示词…"></textarea>
+            </label>
+            <label class="form-field form-field--checkbox">
+              <input id="af-direct" type="checkbox" />
+              <span>直接入口（点击卡片直接进入对话，不经过摘要）</span>
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button class="secondary-button" id="cancelAgentForm" type="button">取消</button>
+            <button class="primary-button" id="saveAgentBtn" type="button">保存</button>
+          </div>
+        </div>
+      </div>
 
       <div class="modal-layer is-hidden" id="summaryModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal-card">

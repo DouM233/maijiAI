@@ -812,44 +812,9 @@ dingLogin.addEventListener("click", () => {
 
 // 检查登录状态 - 如果有 token 直接显示工作空间
 // 更新侧栏用户信息展示
-// 当前用户角色
-let currentUserRole = "user";
-
-// 从 API 加载智能体，覆盖静态 JS 里的配置
-async function loadAgentsFromAPI() {
-  try {
-    var res = await fetch("/api/agents", { headers: { Authorization: "Bearer " + getAuthToken() } });
-    if (!res.ok) return;
-    var data = await res.json();
-    var agents = data.agents || [];
-    // 转成 agentConfigs 格式
-    agents.forEach(function(a) {
-      window.MAIJI_AGENTS[a.id] = {
-        id: a.id,
-        name: a.name,
-        description: a.description,
-        systemPrompt: a.system_prompt,
-        openingMessage: a.opening_message || "",
-        placeholder: a.placeholder || "",
-        summaryPrompt: a.summary_prompt || "",
-        directEntry: !!a.direct_entry,
-        allowModelSwitch: !!a.allow_model_switch,
-        iconEmoji: a.icon_emoji || "🤖",
-        category: a.category || "工作工具"
-      };
-    });
-    // 重新绑定工具卡片
-    document.querySelectorAll(".agent-card").forEach(bindAgentCard);
-  } catch(e) { console.warn("加载 agents 失败:", e); }
-}
-
 function applyUserInfo(user) {
   if (!user) return;
   var name = user.name || "用户";
-  currentUserRole = user.role || "user";
-  // 管理员可见的管理入口
-  var adminBadge = document.getElementById("adminBadge");
-  if (adminBadge) adminBadge.style.display = currentUserRole === "admin" ? "" : "none";
   var nameEl = document.querySelector("#userDisplayName");
   if (nameEl) nameEl.textContent = name;
   var avatarImg = document.querySelector("#userAvatar");
@@ -885,9 +850,6 @@ function applyUserInfo(user) {
 
   // 立即加载历史记录
   loadConversationList();
-
-  // 从服务端加载智能体列表
-  loadAgentsFromAPI();
 
   // 再从服务端刷新用户信息（保证姓名/头像最新）
   fetch("/api/auth/me", { headers: { Authorization: "Bearer " + token } })
@@ -1673,115 +1635,6 @@ document.addEventListener("click", (event) => {
   if (sidebar.contains(event.target)) return;
   closeSidebarMenu();
 });
-
-
-/* ── 管理员专家管理面板 ── */
-(function setupAgentAdmin() {
-  const panel = document.getElementById("agentAdminPanel");
-  const formPanel = document.getElementById("agentFormPanel");
-  const listEl = document.getElementById("agentAdminList");
-  const badge = document.getElementById("adminBadge");
-  const addBtn = document.getElementById("addAgentBtn");
-  const saveBtn = document.getElementById("saveAgentBtn");
-  let editingId = null;
-
-  function openPanel() {
-    panel.classList.remove("is-hidden");
-    renderAgentList();
-  }
-  function closePanel() { panel.classList.add("is-hidden"); }
-  function openForm(agent) {
-    editingId = agent ? agent.id : null;
-    document.getElementById("agentFormTitle").textContent = agent ? "编辑智能体" : "新增智能体";
-    document.getElementById("af-id").value = agent?.id || "";
-    document.getElementById("af-id").disabled = !!agent;
-    document.getElementById("af-name").value = agent?.name || "";
-    document.getElementById("af-desc").value = agent?.description || "";
-    document.getElementById("af-category").value = agent?.category || "工作工具";
-    document.getElementById("af-icon").value = agent?.icon_emoji || "🤖";
-    document.getElementById("af-opening").value = agent?.opening_message || "";
-    document.getElementById("af-placeholder").value = agent?.placeholder || "";
-    document.getElementById("af-prompt").value = agent?.system_prompt || "";
-    document.getElementById("af-direct").checked = !!agent?.direct_entry;
-    formPanel.classList.remove("is-hidden");
-  }
-  function closeForm() { formPanel.classList.add("is-hidden"); }
-
-  async function renderAgentList() {
-    listEl.innerHTML = "<p class='loading-text'>加载中…</p>";
-    try {
-      var res = await fetch("/api/agents", { headers: authHeaders() });
-      var data = await res.json();
-      var agents = data.agents || [];
-      if (!agents.length) { listEl.innerHTML = "<p class='loading-text'>暂无智能体</p>"; return; }
-      listEl.innerHTML = "";
-      agents.forEach(function(a) {
-        var row = document.createElement("div");
-        row.className = "agent-admin-row";
-        row.innerHTML = \`
-          <span class="agent-admin-icon">\${a.icon_emoji || "🤖"}</span>
-          <div class="agent-admin-info">
-            <strong>\${a.name}</strong>
-            <small>\${a.category} · \${a.description || ""}</small>
-          </div>
-          <div class="agent-admin-actions">
-            <button class="secondary-button compact" data-edit="\${a.id}">编辑</button>
-            <button class="secondary-button compact danger" data-del="\${a.id}">删除</button>
-          </div>
-        \`;
-        row.querySelector("[data-edit]").addEventListener("click", function() {
-          closePanel();
-          openForm(a);
-        });
-        row.querySelector("[data-del]").addEventListener("click", async function() {
-          if (!confirm("确认删除「" + a.name + "」？")) return;
-          await fetch("/api/agents?id=" + encodeURIComponent(a.id), { method: "DELETE", headers: authHeaders() });
-          renderAgentList();
-          await loadAgentsFromAPI();
-        });
-        listEl.append(row);
-      });
-    } catch(e) { listEl.innerHTML = "<p class='loading-text'>加载失败</p>"; }
-  }
-
-  if (badge) badge.addEventListener("click", openPanel);
-  document.getElementById("closeAgentAdmin")?.addEventListener("click", closePanel);
-  document.getElementById("closeAgentForm")?.addEventListener("click", closeForm);
-  document.getElementById("cancelAgentForm")?.addEventListener("click", closeForm);
-  addBtn?.addEventListener("click", function() { closePanel(); openForm(null); });
-
-  saveBtn?.addEventListener("click", async function() {
-    var id = document.getElementById("af-id").value.trim();
-    var name = document.getElementById("af-name").value.trim();
-    if (!name || (!editingId && !id)) { alert("ID 和名称必填"); return; }
-
-    var body = {
-      id: editingId || id,
-      name,
-      description: document.getElementById("af-desc").value.trim(),
-      category: document.getElementById("af-category").value,
-      icon_emoji: document.getElementById("af-icon").value.trim() || "🤖",
-      opening_message: document.getElementById("af-opening").value.trim(),
-      placeholder: document.getElementById("af-placeholder").value.trim(),
-      system_prompt: document.getElementById("af-prompt").value.trim(),
-      direct_entry: document.getElementById("af-direct").checked ? 1 : 0,
-      allow_model_switch: 1
-    };
-
-    var method = editingId ? "PUT" : "POST";
-    var res = await fetch("/api/agents", {
-      method, headers: authHeaders(), body: JSON.stringify(body)
-    });
-    if (res.ok) {
-      closeForm();
-      await loadAgentsFromAPI();
-      alert("保存成功");
-    } else {
-      var err = await res.json();
-      alert("保存失败：" + (err.error || "未知错误"));
-    }
-  });
-})();
 
 window.addEventListener("resize", () => {
   if (!isCompactLayout()) {

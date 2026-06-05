@@ -22,8 +22,24 @@ async function isAdmin(request) {
   return rows[0]?.role === "admin";
 }
 
-// GET /api/agents — 所有用户可访问，返回启用的智能体列表
-export async function GET() {
+// GET /api/agents — 默认只返回启用的；?all=1 时仅管理员可见全部（含 is_active=0）
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const wantAll = searchParams.get("all") === "1";
+
+  if (wantAll) {
+    if (!(await isAdmin(request))) {
+      return NextResponse.json({ error: "仅管理员可操作" }, { status: 403 });
+    }
+    const [rows] = await pool.execute(
+      `SELECT id, name, description, system_prompt, opening_message, placeholder,
+              summary_prompt, direct_entry, allow_model_switch, icon_emoji, category,
+              sort_order, is_active, created_at, updated_at
+       FROM agents ORDER BY is_active DESC, sort_order ASC, created_at ASC`
+    );
+    return NextResponse.json({ agents: rows });
+  }
+
   const [rows] = await pool.execute(
     `SELECT id, name, description, system_prompt, opening_message, placeholder,
             summary_prompt, direct_entry, allow_model_switch, icon_emoji, category, sort_order

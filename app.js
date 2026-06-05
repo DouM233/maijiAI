@@ -1641,3 +1641,274 @@ window.addEventListener("resize", () => {
     syncSidebarMenuState(false);
   }
 });
+
+/* ─────────────────────────────────────────────
+ * 智能体管理（后台 / 仅管理员）
+ * ───────────────────────────────────────────── */
+(function setupAgentAdmin() {
+  const agentAdminList   = document.querySelector("#agentAdminList");
+  const agentCountBadge  = document.querySelector("#agentCountBadge");
+  const agentCreateBtn   = document.querySelector("#agentCreateButton");
+  const editorModal      = document.querySelector("#agentEditorModal");
+  const editorForm       = document.querySelector("#agentEditorForm");
+  const editorTitle      = document.querySelector("#agentEditorTitle");
+  const editorClose      = document.querySelector("#agentEditorClose");
+  const editorCancel     = document.querySelector("#agentEditorCancel");
+  const editorError      = document.querySelector("#agentEditorError");
+  const idField          = document.querySelector("#agentField_id");
+
+  if (!agentAdminList || !editorForm) return; // 元素不存在，安全退出
+
+  let agentsCache = [];
+  let editingId   = null;       // null = 新建
+  let saving      = false;
+
+  function getToken() {
+    return localStorage.getItem("maijiai_token") || "";
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  async function apiRequest(method, url, body) {
+    const opts = {
+      method,
+      headers: { Authorization: "Bearer " + getToken() }
+    };
+    if (body !== undefined) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(body);
+    }
+    const res = await fetch(url, opts);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data.error || ("请求失败 " + res.status));
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+
+  async function loadAdminAgents() {
+    agentAdminList.innerHTML = '<p class="agent-admin-empty">正在加载…</p>';
+    try {
+      const data = await apiRequest("GET", "/api/agents?all=1");
+      agentsCache = data.agents || [];
+      renderList();
+    } catch (e) {
+      if (e.status === 403) {
+        agentAdminList.innerHTML = '<p class="agent-admin-empty">仅管理员可访问。</p>';
+      } else if (e.status === 401) {
+        agentAdminList.innerHTML = '<p class="agent-admin-empty">登录已过期，请重新登录。</p>';
+      } else {
+        agentAdminList.innerHTML = '<p class="agent-admin-empty">加载失败：' + escapeHtml(e.message) + '</p>';
+      }
+    }
+  }
+
+  function renderList() {
+    if (agentCountBadge) {
+      agentCountBadge.textContent = agentsCache.length + " 个智能体";
+    }
+    if (!agentsCache.length) {
+      agentAdminList.innerHTML = '<p class="agent-admin-empty">还没有智能体，点击右上角"上架新智能体"创建。</p>';
+      return;
+    }
+    agentAdminList.innerHTML = agentsCache.map(function(a) {
+      const active = Number(a.is_active) === 1;
+      return ''
+        + '<div class="agent-admin-row' + (active ? '' : ' is-disabled') + '" data-id="' + escapeHtml(a.id) + '">'
+        +   '<span class="agent-admin-icon">' + escapeHtml(a.icon_emoji || "🤖") + '</span>'
+        +   '<div class="agent-admin-info">'
+        +     '<strong>' + escapeHtml(a.name) + (active ? '' : '<span class="badge-off">未上架</span>') + '</strong>'
+        +     '<small>' + escapeHtml(a.category || "") + ' · id=' + escapeHtml(a.id)
+        +       (a.description ? ' · ' + escapeHtml(a.description) : "")
+        +     '</small>'
+        +   '</div>'
+        +   '<div class="agent-admin-actions">'
+        +     '<button class="mini-button" type="button" data-act="edit">编辑</button>'
+        +     '<button class="mini-button" type="button" data-act="toggle">' + (active ? "下架" : "上架") + '</button>'
+        +     '<button class="mini-button" type="button" data-act="delete">删除</button>'
+        +   '</div>'
+        + '</div>';
+    }).join("");
+
+    agentAdminList.querySelectorAll("[data-act]").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        const row = btn.closest(".agent-admin-row");
+        const id = row && row.dataset.id;
+        const act = btn.dataset.act;
+        const a = agentsCache.find(function(x) { return x.id === id; });
+        if (!a) return;
+        if (act === "edit") openEditor(a);
+        else if (act === "toggle") toggleActive(a);
+        else if (act === "delete") deleteAgent(a);
+      });
+    });
+  }
+
+  function fillForm(a) {
+    const v = a || {};
+    idField.value = v.id || "";
+    idField.disabled = !!a;       // 编辑时不允许改 id（DB 主键）
+    document.querySelector("#agentField_name").value             = v.name || "";
+    document.querySelector("#agentField_icon_emoji").value       = v.icon_emoji || "🤖";
+    document.querySelector("#agentField_category").value         = v.category || "工作工具";
+    document.querySelector("#agentField_sort_order").value       = v.sort_order != null ? v.sort_order : 0;
+    document.querySelector("#agentField_description").value      = v.description || "";
+    document.querySelector("#agentField_system_prompt").value    = v.system_prompt || "";
+    document.querySelector("#agentField_opening_message").value  = v.opening_message || "";
+    document.querySelector("#agentField_placeholder").value      = v.placeholder || "";
+    document.querySelector("#agentField_summary_prompt").value   = v.summary_prompt || "";
+    document.querySelector("#agentField_direct_entry").checked       = Number(v.direct_entry) === 1;
+    document.querySelector("#agentField_allow_model_switch").checked = a ? Number(v.allow_model_switch) === 1 : true;
+    document.querySelector("#agentField_is_active").checked          = a ? Number(v.is_active) === 1 : true;
+  }
+
+  function openEditor(a) {
+    editingId = a ? a.id : null;
+    editorTitle.textContent = a ? ("编辑：" + a.name) : "上架新智能体";
+    editorError.textContent = "";
+    fillForm(a);
+    editorModal.classList.remove("is-hidden");
+    // 滚到顶部
+    const card = editorModal.querySelector(".modal-card");
+    if (card) card.scrollTop = 0;
+    setTimeout(function() {
+      if (!a) idField.focus();
+      else document.querySelector("#agentField_name").focus();
+    }, 30);
+  }
+
+  function closeEditor() {
+    editorModal.classList.add("is-hidden");
+    editingId = null;
+  }
+
+  function collectForm() {
+    return {
+      id:                  idField.value.trim(),
+      name:                document.querySelector("#agentField_name").value.trim(),
+      description:         document.querySelector("#agentField_description").value.trim(),
+      system_prompt:       document.querySelector("#agentField_system_prompt").value,
+      opening_message:     document.querySelector("#agentField_opening_message").value,
+      placeholder:         document.querySelector("#agentField_placeholder").value.trim(),
+      summary_prompt:      document.querySelector("#agentField_summary_prompt").value.trim(),
+      icon_emoji:          document.querySelector("#agentField_icon_emoji").value.trim() || "🤖",
+      category:            document.querySelector("#agentField_category").value.trim() || "工作工具",
+      sort_order:          Number(document.querySelector("#agentField_sort_order").value) || 0,
+      direct_entry:        document.querySelector("#agentField_direct_entry").checked ? 1 : 0,
+      allow_model_switch:  document.querySelector("#agentField_allow_model_switch").checked ? 1 : 0,
+      is_active:           document.querySelector("#agentField_is_active").checked ? 1 : 0
+    };
+  }
+
+  async function saveAgent() {
+    if (saving) return;
+    editorError.textContent = "";
+    const payload = collectForm();
+    if (!payload.id || !/^[a-z0-9-]+$/.test(payload.id)) {
+      editorError.textContent = "ID 必填，且只能包含小写字母、数字和短横线。";
+      return;
+    }
+    if (!payload.name) {
+      editorError.textContent = "名称必填。";
+      return;
+    }
+    if (!payload.system_prompt.trim()) {
+      editorError.textContent = "System Prompt 必填。";
+      return;
+    }
+    saving = true;
+    try {
+      if (editingId) {
+        // PUT 不需要重新发 id 字段以外的不变内容，但全量发更稳
+        await apiRequest("PUT", "/api/agents", payload);
+      } else {
+        await apiRequest("POST", "/api/agents", payload);
+      }
+      closeEditor();
+      await loadAdminAgents();
+    } catch (e) {
+      editorError.textContent = "保存失败：" + e.message;
+    } finally {
+      saving = false;
+    }
+  }
+
+  async function toggleActive(a) {
+    const nextActive = Number(a.is_active) === 1 ? 0 : 1;
+    try {
+      await apiRequest("PUT", "/api/agents", { id: a.id, is_active: nextActive });
+      await loadAdminAgents();
+    } catch (e) {
+      alert("操作失败：" + e.message);
+    }
+  }
+
+  async function deleteAgent(a) {
+    if (!confirm("确认删除「" + a.name + "」？删除后用户将看不到，但数据仍可在数据库恢复。")) return;
+    try {
+      await apiRequest("DELETE", "/api/agents?id=" + encodeURIComponent(a.id));
+      await loadAdminAgents();
+    } catch (e) {
+      alert("删除失败：" + e.message);
+    }
+  }
+
+  if (agentCreateBtn) agentCreateBtn.addEventListener("click", function() { openEditor(null); });
+  if (editorClose)    editorClose.addEventListener("click", closeEditor);
+  if (editorCancel)   editorCancel.addEventListener("click", closeEditor);
+  editorModal.addEventListener("click", function(e) {
+    if (e.target === editorModal) closeEditor();
+  });
+  editorForm.addEventListener("submit", function(e) {
+    e.preventDefault();
+    saveAgent();
+  });
+
+  // 暴露给 openAdminView 调用
+  window.__loadAdminAgents = loadAdminAgents;
+})();
+
+/* ─────────────────────────────────────────────
+ * 管理员权限：根据 user.role 控制 #adminNav 显隐
+ * ───────────────────────────────────────────── */
+(function setupAdminGate() {
+  function applyAdminGate(user) {
+    const navBtn = document.querySelector("#adminNav");
+    if (!navBtn) return;
+    if (user && user.role === "admin") {
+      navBtn.classList.remove("is-hidden");
+    } else {
+      navBtn.classList.add("is-hidden");
+    }
+  }
+  // 首屏：从 localStorage 读
+  try {
+    const cached = JSON.parse(localStorage.getItem("maijiai_user") || "null");
+    applyAdminGate(cached);
+  } catch (e) {}
+  // 监听 /api/auth/me 之后的存储变化（同 tab 内 setItem 不会触发 storage 事件，
+  // 所以这里包一层 setItem 拦截）
+  const origSetItem = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(k, v) {
+    origSetItem(k, v);
+    if (k === "maijiai_user") {
+      try { applyAdminGate(JSON.parse(v)); } catch (e) {}
+    }
+  };
+
+  // 接管 openAdminView：进入后台时同时拉取智能体列表
+  const navBtn = document.querySelector("#adminNav");
+  if (navBtn) {
+    navBtn.addEventListener("click", function() {
+      if (typeof window.__loadAdminAgents === "function") {
+        window.__loadAdminAgents();
+      }
+    });
+  }
+})();

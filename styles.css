@@ -4086,3 +4086,65 @@ body.light-mode .agent-admin-row { background: #f8fafc; }
 @media (max-width: 680px) {
   .agent-form-grid { grid-template-columns: 1fr; }
 }
+
+
+/* ââ æºè½ä½ç®¡çï¼æ°çé¢æ¿ ââ */
+.agent-admin-empty {
+  color: #94a3b8;
+  text-align: center;
+  padding: 1.5rem;
+  font-size: 0.85rem;
+}
+.agent-admin-row.is-disabled {
+  opacity: 0.55;
+  border-style: dashed;
+}
+.agent-admin-row .badge-off {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.35rem;
+  background: #fef3c7;
+  color: #92400e;
+  margin-left: 0.4rem;
+}
+
+/* ç¼è¾å¨ modal */
+.modal-card.modal-card-wide {
+  width: min(56rem, 96vw);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.agent-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.agent-editor-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.75rem;
+}
+.agent-editor-checks {
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  align-items: center;
+}
+.agent-editor-form .checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  color: #475569;
+}
+.agent-editor-form .checkbox-field input { width: auto; }
+.agent-editor-form .form-field span .required { color: #dc2626; font-style: normal; margin-left: 0.15rem; }
+.agent-editor-error {
+  color: #dc2626;
+  font-size: 0.8rem;
+  min-height: 1.1rem;
+  margin: 0;
+}
+
+@media (max-width: 680px) {
+  .agent-editor-row { grid-template-columns: 1fr; }
+}

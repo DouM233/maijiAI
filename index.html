@@ -42,6 +42,10 @@
               <span aria-hidden="true">✎</span>
               发起新对话
             </button>
+            <button class="nav-item is-hidden" id="adminNav" type="button" data-admin-only="true">
+              <span aria-hidden="true">⚙</span>
+              智能体管理
+            </button>
           </nav>
 
           <div class="sidebar-section">
@@ -270,17 +274,33 @@
             <div class="creator-header">
               <div>
                 <p class="eyebrow">后台管理</p>
-                <h1>统一管理专家上架、知识库挂载和审计能力</h1>
+                <h1>智能体管理 · 上架可对话的 MVP 智能体</h1>
               </div>
-              <button class="primary-button" id="adminCreateExpert" type="button">上架专家</button>
+              <button class="primary-button" id="agentCreateButton" type="button">+ 上架新智能体</button>
             </div>
+
+            <section class="admin-panel collapsible-section" id="agentManagePanel">
+              <div class="admin-panel-head">
+                <div>
+                  <h2>智能体列表</h2>
+                  <p>后台创建的对话智能体，启用后会出现在用户首页与"已接入能力"中。</p>
+                </div>
+                <span id="agentCountBadge">0 个智能体</span>
+                <button class="collapse-toggle" type="button" aria-label="收起模块">收起</button>
+              </div>
+              <div class="collapsible-body">
+                <div class="agent-admin-list" id="agentAdminList">
+                  <p class="agent-admin-empty">正在加载…</p>
+                </div>
+              </div>
+            </section>
 
             <div class="admin-grid">
               <section class="admin-panel collapsible-section">
                 <div class="admin-panel-head">
                   <div>
-                    <h2>专家列表</h2>
-                    <p>后台创建或本地保存的专家都会出现在这里。</p>
+                    <h2>专家列表（旧）</h2>
+                    <p>本地保存的专家原型数据，仅供参考。</p>
                   </div>
                   <span id="expertCountBadge">0 个专家</span>
                   <button class="collapse-toggle" type="button" aria-label="收起模块">收起</button>
@@ -607,6 +627,85 @@
           </div>
         </div>
       </div>
+
+      <div class="modal-layer is-hidden" id="agentEditorModal" role="dialog" aria-modal="true" aria-labelledby="agentEditorTitle">
+        <div class="modal-card modal-card-wide">
+          <div class="modal-header">
+            <div>
+              <p class="eyebrow">智能体管理</p>
+              <h2 id="agentEditorTitle">上架新智能体</h2>
+            </div>
+            <button class="close-button" id="agentEditorClose" type="button" aria-label="关闭">×</button>
+          </div>
+          <form id="agentEditorForm" class="agent-editor-form" autocomplete="off">
+            <div class="agent-editor-row">
+              <label class="form-field">
+                <span>智能体 ID <em class="required">*</em></span>
+                <input id="agentField_id" name="id" type="text" required pattern="[a-z0-9-]+" placeholder="如：resume-analysis（小写字母/数字/短横）" />
+              </label>
+              <label class="form-field">
+                <span>名称 <em class="required">*</em></span>
+                <input id="agentField_name" name="name" type="text" required placeholder="如：简历分析" />
+              </label>
+            </div>
+            <div class="agent-editor-row">
+              <label class="form-field">
+                <span>图标 Emoji</span>
+                <input id="agentField_icon_emoji" name="icon_emoji" type="text" maxlength="4" placeholder="🤖" />
+              </label>
+              <label class="form-field">
+                <span>分类</span>
+                <input id="agentField_category" name="category" type="text" placeholder="工作工具 / 内容创作 / HR…" />
+              </label>
+              <label class="form-field">
+                <span>排序（小在前）</span>
+                <input id="agentField_sort_order" name="sort_order" type="number" min="0" step="1" value="0" />
+              </label>
+            </div>
+            <label class="form-field">
+              <span>简介</span>
+              <input id="agentField_description" name="description" type="text" placeholder="给用户看的一句话描述" />
+            </label>
+            <label class="form-field">
+              <span>System Prompt <em class="required">*</em></span>
+              <textarea id="agentField_system_prompt" name="system_prompt" rows="10" required placeholder="智能体的角色、能力、约束、输出格式…"></textarea>
+            </label>
+            <label class="form-field">
+              <span>开场白</span>
+              <textarea id="agentField_opening_message" name="opening_message" rows="3" placeholder="进入对话时智能体先说的话"></textarea>
+            </label>
+            <div class="agent-editor-row">
+              <label class="form-field">
+                <span>输入框占位符</span>
+                <input id="agentField_placeholder" name="placeholder" type="text" placeholder="请输入…" />
+              </label>
+              <label class="form-field">
+                <span>摘要提示词</span>
+                <input id="agentField_summary_prompt" name="summary_prompt" type="text" placeholder="切换专家时压缩上下文用的提示" />
+              </label>
+            </div>
+            <div class="agent-editor-row agent-editor-checks">
+              <label class="checkbox-field">
+                <input id="agentField_direct_entry" name="direct_entry" type="checkbox" />
+                <span>直接进入（无需摘要弹窗）</span>
+              </label>
+              <label class="checkbox-field">
+                <input id="agentField_allow_model_switch" name="allow_model_switch" type="checkbox" checked />
+                <span>允许切换模型</span>
+              </label>
+              <label class="checkbox-field">
+                <input id="agentField_is_active" name="is_active" type="checkbox" checked />
+                <span>已上架（用户可见）</span>
+              </label>
+            </div>
+            <p class="agent-editor-error" id="agentEditorError"></p>
+            <div class="modal-actions">
+              <button class="secondary-button" id="agentEditorCancel" type="button">取消</button>
+              <button class="primary-button" id="agentEditorSave" type="submit">保存</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
@@ -616,4 +715,3 @@
     <script src="./app.js"></script>
   </body>
 </html>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
